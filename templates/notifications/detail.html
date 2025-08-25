@@ -165,8 +165,9 @@
                                 <strong>Bestätigung erforderlich:</strong>
                                 Diese Benachrichtigung erfordert Ihre Bestätigung.
                             </div>
-                            <form method="post" action="#" class="d-inline">
+                            <form method="post" action="{% url 'notifications:acknowledge' notification.id %}" class="d-inline">
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="notifications:detail">
                                 <button type="submit" class="btn btn-warning">
                                     <i class="bi bi-check-circle"></i> Jetzt bestätigen
                                 </button>

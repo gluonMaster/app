@@ -326,6 +326,29 @@ def send_reminder(request, notification_id):
 
 
 @login_required
+@require_POST
+def acknowledge_notification(request, notification_id):
+    """Подтверждение получения критичного уведомления"""
+    notification = get_object_or_404(
+        Notification,
+        id=notification_id,
+        recipient=request.user,
+        requires_acknowledgment=True,
+        acknowledged_at__isnull=True,
+    )
+
+    notification.acknowledge()
+    messages.success(request, "Benachrichtigung wurde bestätigt.")
+
+    # Перенаправляем обратно на детальную страницу или список
+    next_url = request.POST.get("next", "notifications:detail")
+    if next_url == "notifications:detail":
+        return redirect("notifications:detail", notification_id=notification.id)
+    else:
+        return redirect("notifications:notifications_index")
+
+
+@login_required
 def notification_detail(request, notification_id):
     """Детальная страница уведомления"""
     notification = get_object_or_404(
@@ -371,6 +394,6 @@ def notifications_index_view(request):
 
     context = {
         "notifications": notifications,
-        "title": "Уведомления",
+        "title": "Benachrichtigungen",
     }
     return render(request, "notifications/notifications_index.html", context)

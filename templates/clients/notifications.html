@@ -12,39 +12,7 @@
 </div>
 
 {% for notification in notifications %}
-<div class="card mb-3 {% if not notification.is_read %}notification-item unread{% endif %}">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-            <div class="flex-grow-1">
-                <h6 class="card-title {% if not notification.is_read %}fw-bold{% endif %}">
-                    {% if notification.priority == 'critical' %}
-                        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
-                    {% elif notification.priority == 'high' %}
-                        <i class="bi bi-info-circle-fill text-warning me-1"></i>
-                    {% endif %}
-                    {{ notification.title }}
-                </h6>
-                <p class="card-text">{{ notification.message }}</p>
-                <small class="text-muted">
-                    {{ notification.created_at|date:"d.m.Y H:i" }} • 
-                    <span class="badge bg-secondary">{{ notification.get_notification_type_display }}</span>
-                </small>
-            </div>
-            <div class="text-end">
-                {% if not notification.is_read %}
-                    <a href="{% url 'clients:mark_notification_read' notification.id %}" class="btn btn-sm btn-outline-primary">
-                        Als gelesen markieren
-                    </a>
-                {% endif %}
-                {% if notification.requires_acknowledgment and not notification.acknowledged_at %}
-                    <a href="{% url 'clients:acknowledge_notification' notification.id %}" class="btn btn-sm btn-warning">
-                        Bestätigen
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+    {% include 'clients/notification_item.html' %}
 {% empty %}
 <div class="text-center py-5">
     <i class="bi bi-bell-slash display-1 text-muted"></i>

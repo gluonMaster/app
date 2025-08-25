@@ -285,9 +285,11 @@ def teacher_groups_view(request):
         messages.error(request, "Zugriff verweigert.")
         return redirect("login")
 
-    groups = Group.objects.filter(
-        teachers=request.user, is_active=True
-    ).prefetch_related("groupenrollment_set__child__user")
+    groups = (
+        Group.objects.filter(teachers=request.user, is_active=True)
+        .select_related("subject")
+        .prefetch_related("groupenrollment_set__child__user")
+    )
 
     context = {"groups": groups, "title": "Meine Gruppen"}
 

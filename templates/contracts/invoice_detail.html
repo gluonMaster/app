@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load contract_extras %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок с навигацией -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ title }}</h1>
+                <div>
+                    <a href="{% url 'contracts:invoices_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Zurück zur Liste
+                    </a>
+                    {% if invoice.invoice_file %}
+                        <a href="{{ invoice.invoice_file.url }}" class="btn btn-primary" target="_blank">
+                            <i class="bi bi-download"></i> PDF herunterladen
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Информация о счете -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt"></i> Rechnungsinformationen
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Rechnungsnummer:</strong></td>
+                                    <td>{{ invoice.invoice_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Rechnungsdatum:</strong></td>
+                                    <td>{{ invoice.issue_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fälligkeitsdatum:</strong></td>
+                                    <td>
+                                        {% if invoice.is_overdue %}
+                                            <span class="text-danger">
+                                                {{ invoice.due_date|date:"d.m.Y" }}
+                                                <i class="bi bi-exclamation-triangle"></i>
+                                            </span>
+                                        {% else %}
+                                            {{ invoice.due_date|date:"d.m.Y" }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Abrechnungszeitraum:</strong></td>
+                                    <td>{{ invoice.period_start|date:"d.m.Y" }} - {{ invoice.period_end|date:"d.m.Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if invoice.status == 'paid' %}
+                                            <span class="badge bg-success fs-6">{{ invoice.get_status_display }}</span>
+                                        {% elif invoice.status == 'overdue' %}
+                                            <span class="badge bg-danger fs-6">{{ invoice.get_status_display }}</span>
+                                        {% elif invoice.status == 'sent' %}
+                                            <span class="badge bg-warning fs-6">{{ invoice.get_status_display }}</span>
+                                        {% elif invoice.status == 'draft' %}
+                                            <span class="badge bg-secondary fs-6">{{ invoice.get_status_display }}</span>
+                                        {% elif invoice.status == 'cancelled' %}
+                                            <span class="badge bg-dark fs-6">{{ invoice.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-info fs-6">{{ invoice.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if invoice.paid_date %}
+                                <tr>
+                                    <td><strong>Zahlungsdatum:</strong></td>
+                                    <td>{{ invoice.paid_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if invoice.is_overdue %}
+                                <tr>
+                                    <td><strong>Tage überfällig:</strong></td>
+                                    <td><span class="text-danger">{{ invoice.days_overdue }}</span></td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Позиции счета -->
+            {% if invoice_items %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-ul"></i> Rechnungspositionen
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Beschreibung</th>
+                                        <th>Kind</th>
+                                        <th>Fach</th>
+                                        <th>Menge</th>
+                                        <th>Einzelpreis</th>
+                                        <th>Rabatt</th>
+                                        <th>Zahler</th>
+                                        <th>Gesamtbetrag</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in invoice_items %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ item.description }}</strong>
+                                                <br><small class="text-muted">{{ item.get_item_type_display }}</small>
+                                            </td>
+                                            <td>
+                                                {% if item.child %}
+                                                    <i class="bi bi-person-circle me-1"></i>
+                                                    {{ item.child.user.get_full_name }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.subject %}
+                                                    <span class="badge bg-info">{{ item.subject.name }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">{{ item.quantity|floatformat:1 }}</td>
+                                            <td class="text-end">{{ item.unit_price|floatformat:2 }}€</td>
+                                            <td class="text-end">
+                                                {% if item.discount_amount > 0 %}
+                                                    <span class="text-success">-{{ item.discount_amount|floatformat:2 }}€</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.payer == 'client' %}
+                                                    <span class="badge bg-primary">Kunde</span>
+                                                {% elif item.payer == 'jobcenter' %}
+                                                    <span class="badge bg-warning">JobCenter</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>{{ item.total_amount|floatformat:2 }}€</strong>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="6" class="text-end"><strong>Zwischensumme:</strong></td>
+                                        <td></td>
+                                        <td class="text-end"><strong>{{ invoice.subtotal|floatformat:2 }}€</strong></td>
+                                    </tr>
+                                    {% if invoice.total_discount > 0 %}
+                                    <tr>
+                                        <td colspan="6" class="text-end"><strong>Gesamtrabatt:</strong></td>
+                                        <td></td>
+                                        <td class="text-end text-success"><strong>-{{ invoice.total_discount|floatformat:2 }}€</strong></td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="table-primary">
+                                        <td colspan="6" class="text-end"><strong>Gesamtbetrag:</strong></td>
+                                        <td></td>
+                                        <td class="text-end">
+                                            <strong class="fs-5">{{ invoice.total_amount|floatformat:2 }}€</strong>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Платежи -->
+            {% if payments %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-credit-card"></i> Zahlungen zu dieser Rechnung
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>Zahlungsdatum</th>
+                                        <th>Betrag</th>
+                                        <th>Zahlungsmethode</th>
+                                        <th>Referenznummer</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                        <tr>
+                                            <td>
+                                                <i class="bi bi-calendar-date me-1"></i>
+                                                {{ payment.payment_date|date:"d.m.Y" }}
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>{{ payment.amount|floatformat:2 }}€</strong>
+                                            </td>
+                                            <td>
+                                                {% if payment.payment_method == 'cash' %}
+                                                    <i class="bi bi-cash-stack me-1"></i> Bar
+                                                {% elif payment.payment_method == 'bank_transfer' %}
+                                                    <i class="bi bi-bank me-1"></i> Überweisung
+                                                {% elif payment.payment_method == 'sepa' %}
+                                                    <i class="bi bi-credit-card me-1"></i> SEPA-Lastschrift
+                                                {% elif payment.payment_method == 'card' %}
+                                                    <i class="bi bi-credit-card-2-front me-1"></i> Kartenzahlung
+                                                {% elif payment.payment_method == 'jobcenter' %}
+                                                    <i class="bi bi-building me-1"></i> JobCenter
+                                                {% else %}
+                                                    {{ payment.get_payment_method_display }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if payment.reference_number %}
+                                                    <code>{{ payment.reference_number }}</code>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if payment.status == 'completed' %}
+                                                    <span class="badge bg-success">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'pending' %}
+                                                    <span class="badge bg-warning">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'failed' %}
+                                                    <span class="badge bg-danger">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'refunded' %}
+                                                    <span class="badge bg-info">{{ payment.get_status_display }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ payment.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% if payment.notes %}
+                                            <tr>
+                                                <td colspan="5">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-info-circle"></i> {{ payment.notes }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td class="text-end"><strong>Gesamte Zahlungen:</strong></td>
+                                        <td class="text-end">
+                                            <strong class="text-success">
+                                                {{ payments|total_payments|floatformat:2 }}€
+                                            </strong>
+                                        </td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end"><strong>Restbetrag:</strong></td>
+                                        <td class="text-end">
+                                            <strong class="{% if invoice.status == 'paid' %}text-success{% else %}text-danger{% endif %}">
+                                                {{ invoice.total_amount|subtract:payments|total_payments|floatformat:2 }}€
+                                            </strong>
+                                        </td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Zu dieser Rechnung sind noch keine Zahlungen erfasst.
+                </div>
+            {% endif %}
+
+            <!-- Notizen -->
+            {% if invoice.notes %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-sticky"></i> Notizen
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">{{ invoice.notes|linebreaks }}</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Aktionen -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Haben Sie Fragen zu dieser Rechnung?</h6>
+                            <p class="card-text">
+                                Kontaktieren Sie uns bei Unklarheiten oder Problemen mit der Abrechnung.
+                            </p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="mailto:buchhaltung@bildungszentrum.de" class="btn btn-primary">
+                                    <i class="bi bi-envelope"></i> E-Mail senden
+                                </a>
+                                <a href="tel:+493012345678" class="btn btn-outline-primary">
+                                    <i class="bi bi-telephone"></i> Anrufen
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

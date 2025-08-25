@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load contract_extras %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок с навигацией -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ title }}</h1>
+                <div>
+                    <a href="{% url 'clients:parent_dashboard' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Zurück zum Dashboard
+                    </a>
+                    <a href="{% url 'contracts:invoices_list' %}" class="btn btn-info">
+                        <i class="bi bi-receipt"></i> Rechnungen
+                    </a>
+                </div>
+            </div>
+
+            <!-- Информационный блок -->
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle"></i>
+                <strong>Einmalige Gebühren</strong> sind zusätzliche Kosten, die nicht Teil Ihres regulären
+                Unterrichtsvertrags sind. Diese werden separat abgerechnet und können verschiedene Bereiche umfassen.
+            </div>
+
+            <!-- Список разовых начислений -->
+            {% if charges %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt-cutoff"></i> Ihre einmaligen Gebühren
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Rechnungsdatum</th>
+                                        <th>Gebührentyp</th>
+                                        <th>Beschreibung</th>
+                                        <th>Kind</th>
+                                        <th>Betrag</th>
+                                        <th>Fälligkeitsdatum</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for charge in charges %}
+                                        <tr {% if charge.is_paid %}class="table-success"{% elif charge.due_date|date:'Y-m-d' < today|date:'Y-m-d' %}class="table-warning"{% endif %}>
+                                            <td>
+                                                <i class="bi bi-calendar-date me-1"></i>
+                                                <strong>{{ charge.charge_date|date:"d.m.Y" }}</strong>
+                                            </td>
+                                            <td>
+                                                {% if charge.charge_type == 'library' %}
+                                                    <span class="badge bg-primary">
+                                                        <i class="bi bi-book"></i> Bibliothek
+                                                    </span>
+                                                {% elif charge.charge_type == 'costume' %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-mask"></i> Kostüme/Requisiten
+                                                    </span>
+                                                {% elif charge.charge_type == 'materials' %}
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-journals"></i> Unterrichtsmaterialien
+                                                    </span>
+                                                {% elif charge.charge_type == 'event' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-calendar-event"></i> Veranstaltung
+                                                    </span>
+                                                {% elif charge.charge_type == 'registration' %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-person-plus"></i> Anmeldegebühr
+                                                    </span>
+                                                {% elif charge.charge_type == 'other' %}
+                                                    <span class="badge bg-dark">
+                                                        <i class="bi bi-three-dots"></i> Sonstiges
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-light text-dark">
+                                                        {{ charge.get_charge_type_display }}
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <strong>{{ charge.description }}</strong>
+                                                {% if charge.notes %}
+                                                    <br><small class="text-muted">{{ charge.notes|truncatechars:50 }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if charge.child %}
+                                                    <i class="bi bi-person-circle me-1"></i>
+                                                    {{ charge.child.user.get_full_name }}
+                                                {% else %}
+                                                    <span class="text-muted">Allgemein</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="fs-6 fw-bold">{{ charge.amount|floatformat:2 }}€</span>
+                                            </td>
+                                            <td>
+                                                {% if charge.is_paid %}
+                                                    <span class="text-success">
+                                                        <i class="bi bi-check-circle"></i>
+                                                        {{ charge.due_date|date:"d.m.Y" }}
+                                                    </span>
+                                                {% elif charge.due_date|date:'Y-m-d' < today|date:'Y-m-d' %}
+                                                    <span class="text-danger">
+                                                        <i class="bi bi-exclamation-triangle"></i>
+                                                        {{ charge.due_date|date:"d.m.Y" }}
+                                                    </span>
+                                                    <br><small class="text-danger">Überfällig</small>
+                                                {% else %}
+                                                    {{ charge.due_date|date:"d.m.Y" }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if charge.is_paid %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Bezahlt
+                                                    </span>
+                                                    {% if charge.paid_date %}
+                                                        <br><small class="text-muted">{{ charge.paid_date|date:"d.m.Y" }}</small>
+                                                    {% endif %}
+                                                {% elif charge.due_date|date:'Y-m-d' < today|date:'Y-m-d' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-exclamation-triangle"></i> Überfällig
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-clock"></i> Ausstehend
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <!-- Erweiterte Notizen falls vorhanden -->
+                                        {% if charge.notes and charge.notes|length > 50 %}
+                                            <tr class="table-light">
+                                                <td colspan="7">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-info-circle"></i>
+                                                        <strong>Vollständige Notiz:</strong> {{ charge.notes }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zusammenfassung -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <i class="bi bi-receipt-cutoff text-info fs-1"></i>
+                                <h6 class="card-title mt-2">Gesamt Gebühren</h6>
+                                <p class="card-text fs-5 mb-0">{{ charges.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="bi bi-check-circle text-success fs-1"></i>
+                                <h6 class="card-title mt-2">Bezahlt</h6>
+                                <p class="card-text fs-5 mb-0">
+                                    {% regroup charges by is_paid as paid_groups %}
+                                    {% for group in paid_groups %}
+                                        {% if group.grouper %}
+                                            {{ group.list|length }}
+                                        {% endif %}
+                                    {% empty %}
+                                        0
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="bi bi-clock text-warning fs-1"></i>
+                                <h6 class="card-title mt-2">Ausstehend</h6>
+                                <p class="card-text fs-5 mb-0">
+                                    {% regroup charges by is_paid as paid_groups %}
+                                    {% for group in paid_groups %}
+                                        {% if not group.grouper %}
+                                            {{ group.list|length }}
+                                        {% endif %}
+                                    {% empty %}
+                                        0
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calculator text-primary fs-1"></i>
+                                <h6 class="card-title mt-2">Gesamtbetrag</h6>
+                                <p class="card-text fs-6 mb-0 text-primary">
+                                    {{ charges|sum_amounts|floatformat:2 }}€
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kategorien der Gebühren -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-pie-chart"></i> Gebühren nach Kategorien
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% regroup charges by charge_type as type_groups %}
+                                    {% for group in type_groups %}
+                                        <div class="col-md-4 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                                                <div>
+                                                    <strong>{{ group.grouper|capfirst }}</strong>
+                                                    <br><small class="text-muted">{{ group.list|length }} Positionen</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="fw-bold">
+                                                        {{ group.list|sum_group_amounts|floatformat:2 }}€
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informationen -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-info-circle text-info"></i> Was sind einmalige Gebühren?
+                                </h6>
+                                <p class="card-text small">
+                                    Einmalige Gebühren sind zusätzliche Kosten, die nicht Teil Ihres
+                                    regulären Unterrichtsvertrags sind:
+                                </p>
+                                <ul class="list-unstyled small">
+                                    <li><i class="bi bi-check text-success"></i> Bibliotheksgebühren</li>
+                                    <li><i class="bi bi-check text-success"></i> Kostüme und Requisiten</li>
+                                    <li><i class="bi bi-check text-success"></i> Zusätzliche Materialien</li>
+                                    <li><i class="bi bi-check text-success"></i> Veranstaltungen und Ausflüge</li>
+                                    <li><i class="bi bi-check text-success"></i> Anmeldegebühren</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-question-circle text-primary"></i> Fragen zu Gebühren?
+                                </h6>
+                                <p class="card-text small">
+                                    Bei Fragen zu einmaligen Gebühren oder zur Abrechnung kontaktieren Sie uns:
+                                </p>
+                                <div class="d-flex gap-2">
+                                    <a href="mailto:buchhaltung@bildungszentrum.de"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-envelope"></i> E-Mail senden
+                                    </a>
+                                    <a href="tel:+493012345678"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-telephone"></i> Anrufen
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Es sind noch keine einmaligen Gebühren für Sie erfasst.
+                    <br><br>
+                    Einmalige Gebühren entstehen beispielsweise durch:
+                    <ul class="mt-2 mb-0">
+                        <li>Bibliotheksgebühren</li>
+                        <li>Kostüme und Requisiten für Aufführungen</li>
+                        <li>Zusätzliche Unterrichtsmaterialien</li>
+                        <li>Teilnahme an Veranstaltungen oder Ausflügen</li>
+                        <li>Anmeldegebühren für neue Kurse</li>
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

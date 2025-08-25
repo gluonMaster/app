@@ -13,6 +13,11 @@ urlpatterns = [
     path("api/mark-all-read/", views.mark_all_read, name="mark_all_read"),
     # Детали уведомления
     path("<int:notification_id>/", views.notification_detail, name="detail"),
+    path(
+        "<int:notification_id>/acknowledge/",
+        views.acknowledge_notification,
+        name="acknowledge",
+    ),
     # Для администраторов
     path("admin/stats/", views.notification_stats_view, name="admin_stats"),
     path("admin/send/", views.send_notification_view, name="send_notification"),

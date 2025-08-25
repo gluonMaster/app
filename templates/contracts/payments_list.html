@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load contract_extras %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок с навигацией -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ title }}</h1>
+                <div>
+                    <a href="{% url 'clients:parent_dashboard' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Zurück zum Dashboard
+                    </a>
+                    <a href="{% url 'contracts:invoices_list' %}" class="btn btn-info">
+                        <i class="bi bi-receipt"></i> Rechnungen
+                    </a>
+                </div>
+            </div>
+
+            <!-- Список платежей -->
+            {% if payments %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-credit-card"></i> Zahlungshistorie
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Zahlungsdatum</th>
+                                        <th>Rechnung</th>
+                                        <th>Betrag</th>
+                                        <th>Zahlungsmethode</th>
+                                        <th>Referenznummer</th>
+                                        <th>Status</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                        <tr>
+                                            <td>
+                                                <i class="bi bi-calendar-date me-1"></i>
+                                                <strong>{{ payment.payment_date|date:"d.m.Y" }}</strong>
+                                                <br><small class="text-muted">{{ payment.created_at|date:"H:i" }} Uhr</small>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'contracts:invoice_detail' payment.invoice.id %}"
+                                                   class="text-decoration-none">
+                                                    <strong>{{ payment.invoice.invoice_number }}</strong>
+                                                </a>
+                                                <br><small class="text-muted">
+                                                    {{ payment.invoice.period_start|date:"m.Y" }} -
+                                                    {{ payment.invoice.period_end|date:"m.Y" }}
+                                                </small>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="fs-6 fw-bold text-success">
+                                                    {{ payment.amount|floatformat:2 }}€
+                                                </span>
+                                                <br><small class="text-muted">
+                                                    von {{ payment.invoice.total_amount|floatformat:2 }}€
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if payment.payment_method == 'cash' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-cash-stack"></i> Bar
+                                                    </span>
+                                                {% elif payment.payment_method == 'bank_transfer' %}
+                                                    <span class="badge bg-primary">
+                                                        <i class="bi bi-bank"></i> Überweisung
+                                                    </span>
+                                                {% elif payment.payment_method == 'sepa' %}
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-credit-card"></i> SEPA-Lastschrift
+                                                    </span>
+                                                {% elif payment.payment_method == 'card' %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-credit-card-2-front"></i> Kartenzahlung
+                                                    </span>
+                                                {% elif payment.payment_method == 'jobcenter' %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-building"></i> JobCenter
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-light text-dark">
+                                                        {{ payment.get_payment_method_display }}
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if payment.reference_number %}
+                                                    <code class="text-primary">{{ payment.reference_number }}</code>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if payment.status == 'completed' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> {{ payment.get_status_display }}
+                                                    </span>
+                                                {% elif payment.status == 'pending' %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-clock"></i> {{ payment.get_status_display }}
+                                                    </span>
+                                                {% elif payment.status == 'failed' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-x-circle"></i> {{ payment.get_status_display }}
+                                                    </span>
+                                                {% elif payment.status == 'refunded' %}
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-arrow-counterclockwise"></i> {{ payment.get_status_display }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ payment.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'contracts:invoice_detail' payment.invoice.id %}"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Rechnung anzeigen">
+                                                    <i class="bi bi-receipt"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% if payment.notes %}
+                                            <tr class="table-light">
+                                                <td colspan="7">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-info-circle"></i>
+                                                        <strong>Notiz:</strong> {{ payment.notes }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                        {% if payment.bank_details %}
+                                            <tr class="table-light">
+                                                <td colspan="7">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-bank"></i>
+                                                        <strong>Bankdaten:</strong> {{ payment.bank_details }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zusammenfassung -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calculator text-success fs-1"></i>
+                                <h6 class="card-title mt-2">Gesamtzahlungen</h6>
+                                <p class="card-text fs-5 mb-0 text-success">
+                                    {{ payments|sum_amounts|floatformat:2 }}€
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <i class="bi bi-receipt text-info fs-1"></i>
+                                <h6 class="card-title mt-2">Anzahl Zahlungen</h6>
+                                <p class="card-text fs-5 mb-0">{{ payments.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <i class="bi bi-credit-card text-primary fs-1"></i>
+                                <h6 class="card-title mt-2">Häufigste Methode</h6>
+                                <p class="card-text fs-6 mb-0">
+                                    {% regroup payments by payment_method as method_groups %}
+                                    {% for group in method_groups %}
+                                        {% if forloop.first %}
+                                            {{ group.grouper|capfirst }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calendar-month text-warning fs-1"></i>
+                                <h6 class="card-title mt-2">Letzter Monat</h6>
+                                <p class="card-text fs-6 mb-0">
+                                    {% now "n" as current_month %}
+                                    {% regroup payments by payment_date.month as month_groups %}
+                                    {% for group in month_groups %}
+                                        {% if group.grouper == current_month|add:"0" %}
+                                            {{ group.list|length }} Zahlungen
+                                        {% endif %}
+                                    {% empty %}0 Zahlungen{% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Информационные блоки -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-info-circle text-info"></i> Zahlungsmethoden
+                                </h6>
+                                <p class="card-text small">
+                                    Wir akzeptieren verschiedene Zahlungsmethoden für Ihre Bequemlichkeit:
+                                </p>
+                                <ul class="list-unstyled small">
+                                    <li><i class="bi bi-check text-success"></i> SEPA-Lastschrift (empfohlen)</li>
+                                    <li><i class="bi bi-check text-success"></i> Banküberweisung</li>
+                                    <li><i class="bi bi-check text-success"></i> Barzahlung vor Ort</li>
+                                    <li><i class="bi bi-check text-success"></i> Kartenzahlung</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-question-circle text-primary"></i> Fragen zu Zahlungen?
+                                </h6>
+                                <p class="card-text small">
+                                    Bei Fragen zu Ihren Zahlungen oder Problemen kontaktieren Sie uns:
+                                </p>
+                                <div class="d-flex gap-2">
+                                    <a href="mailto:buchhaltung@bildungszentrum.de"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-envelope"></i> E-Mail
+                                    </a>
+                                    <a href="tel:+493012345678"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-telephone"></i> Anrufen
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Es sind noch keine Zahlungen erfasst.
+                    <br><br>
+                    Sobald Sie Ihre ersten Rechnungen bezahlt haben, werden diese hier angezeigt.
+                    <br>
+                    <a href="{% url 'contracts:invoices_list' %}" class="alert-link">
+                        Zu den Rechnungen »
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

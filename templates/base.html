@@ -104,13 +104,26 @@
                                     </span>
                                 {% endif %}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" style="width: 300px;">
-                                <li><h6 class="dropdown-header">Benachrichtigungen</h6></li>
+                            <ul class="dropdown-menu dropdown-menu-end" style="width: 350px;">
+                                <li>
+                                    <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                        <span>Benachrichtigungen</span>
+                                        {% if unread_notifications_count > 0 %}
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="markAllNotificationsRead()">
+                                                <i class="bi bi-check-all"></i> Alle als gelesen
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <!-- Здесь будут последние уведомления через AJAX -->
+                                <!-- Уведомления будут загружены через AJAX -->
+                                <li>
+                                    <span class="dropdown-item-text text-muted">Lade Benachrichtigungen...</span>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-center" href="{% url 'notifications:notifications_index' %}">
-                                        Alle anzeigen
+                                        <i class="bi bi-list"></i> Alle anzeigen
                                     </a>
                                 </li>
                             </ul>

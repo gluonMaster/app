@@ -73,7 +73,11 @@ class ParentDashboardView(DashboardView):
         user = self.request.user
 
         # Информация о детях
-        children = Child.objects.filter(parent=user, is_active=True)
+        children = (
+            Child.objects.filter(parent=user, is_active=True)
+            .select_related("user")
+            .prefetch_related("groupenrollment_set__group__subject")
+        )
         context["children"] = children
 
         # Активные контракты
@@ -245,9 +249,11 @@ class TeacherDashboardView(DashboardView):
         user = self.request.user
 
         # Группы учителя
-        teacher_groups = Group.objects.filter(
-            teachers=user, is_active=True
-        ).prefetch_related("subject", "groupenrollment_set__child__user")
+        teacher_groups = (
+            Group.objects.filter(teachers=user, is_active=True)
+            .select_related("subject")
+            .prefetch_related("groupenrollment_set")
+        )
         context["teacher_groups"] = teacher_groups
 
         # Сегодняшние занятия
@@ -423,7 +429,11 @@ def children_list_view(request):
         messages.error(request, "Zugriff verweigert.")
         return redirect("clients:home")
 
-    children = Child.objects.filter(parent=request.user, is_active=True)
+    children = (
+        Child.objects.filter(parent=request.user, is_active=True)
+        .select_related("user")
+        .prefetch_related("groupenrollment_set__group__subject")
+    )
     context = {"children": children}
     return render(request, "clients/children_list.html", context)
 

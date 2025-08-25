@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Unterrichtsinhalt bearbeiten - {{ lesson.group.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-pencil-square text-primary me-2"></i>
+        Unterrichtsinhalt bearbeiten
+    </h1>
+    <a href="{% url 'lessons:teacher_lesson_detail' lesson.id %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Zurück
+    </a>
+</div>
+
+<!-- Информация об уроке -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-info-circle me-2"></i>
+            Unterrichtsdetails
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Gruppe:</strong> {{ lesson.group.name }}</p>
+                <p><strong>Fach:</strong> {{ lesson.group.subject.name }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Datum:</strong> {{ lesson.scheduled_date|date:"d.m.Y H:i" }}</p>
+                <p><strong>Status:</strong>
+                    <span class="badge {% if lesson.status == 'conducted' %}bg-success{% elif lesson.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                        {{ lesson.get_status_display }}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Форма редактирования содержания урока -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-journal-text me-2"></i>
+            Inhalt und Materialien
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Поле содержания урока -->
+            <div class="mb-4">
+                {{ form.lesson_content|as_crispy_field }}
+                <small class="form-text text-muted">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Beschreiben Sie, was in dieser Stunde behandelt wurde: Themen, Übungen, Materialien.
+                </small>
+            </div>
+
+            <!-- Поле домашнего задания -->
+            <div class="mb-4">
+                {{ form.homework_assigned|as_crispy_field }}
+                <small class="form-text text-muted">
+                    <i class="bi bi-book me-1"></i>
+                    Geben Sie die Hausaufgaben für die Schüler an.
+                </small>
+            </div>
+
+            <!-- Поле заметок -->
+            <div class="mb-4">
+                {{ form.notes|as_crispy_field }}
+                <small class="form-text text-muted">
+                    <i class="bi bi-chat-left-text me-1"></i>
+                    Zusätzliche Notizen zu Verhalten, Fortschritt oder besonderen Ereignissen.
+                </small>
+            </div>
+
+            <!-- Кнопки действий -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle me-2"></i>Speichern
+                </button>
+                <a href="{% url 'lessons:teacher_lesson_detail' lesson.id %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>Abbrechen
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Дополнительная информация в футере -->
+    <div class="card-footer text-muted">
+        <small>
+            <i class="bi bi-clock me-1"></i>
+            {% if lesson.updated_by %}
+                Zuletzt aktualisiert von {{ lesson.updated_by.get_full_name|default:lesson.updated_by.username }}
+                {% if lesson.updated_at %}am {{ lesson.updated_at|date:"d.m.Y H:i" }}{% endif %}
+            {% else %}
+                Noch nicht aktualisiert
+            {% endif %}
+        </small>
+    </div>
+</div>
+
+<!-- Подсказки для учителя -->
+<div class="alert alert-info mt-4">
+    <h6 class="alert-heading">
+        <i class="bi bi-lightbulb-fill me-2"></i>Tipps für den Unterrichtsinhalt:
+    </h6>
+    <ul class="mb-0">
+        <li><strong>Unterrichtsinhalt:</strong> Beschreiben Sie konkret behandelte Themen, verwendete Methoden und Materialien</li>
+        <li><strong>Hausaufgaben:</strong> Seien Sie spezifisch: Welche Aufgaben, bis wann, mit welchen Materialien</li>
+        <li><strong>Notizen:</strong> Dokumentieren Sie Besonderheiten, Verhalten einzelner Schüler oder wichtige Beobachtungen</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Автосохранение черновика в localStorage (опционально)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const lessonId = {{ lesson.id }};
+    const storageKey = `lesson_content_draft_${lessonId}`;
+
+    // Восстановление данных из localStorage
+    const savedData = localStorage.getItem(storageKey);
+    if (savedData) {
+        try {
+            const data = JSON.parse(savedData);
+            Object.keys(data).forEach(key => {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field && !field.value) {
+                    field.value = data[key];
+                }
+            });
+        } catch (e) {
+            console.log('Fehler beim Laden der gespeicherten Daten:', e);
+        }
+    }
+
+    // Сохранение черновика при изменении полей
+    const textareas = form.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const formData = new FormData(form);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'csrfmiddlewaretoken') {
+                    data[key] = value;
+                }
+            }
+            localStorage.setItem(storageKey, JSON.stringify(data));
+        });
+    });
+
+    // Очистка localStorage при успешной отправке формы
+    form.addEventListener('submit', function() {
+        localStorage.removeItem(storageKey);
+    });
+});
+</script>
+{% endblock %}
