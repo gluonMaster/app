@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Schüler Dashboard - Bildungszentrum{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-person-fill text-primary me-2"></i>Mein Dashboard</h1>
+        <p class="text-muted">Hallo, {{ child.user.get_full_name }}!</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ active_enrollments.count }}</h4>
+                        <p class="card-text">Fächer</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-book-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ attendance_percentage }}%</h4>
+                        <p class="card-text">Anwesenheit</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-check-circle-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ recent_lessons.count }}</h4>
+                        <p class="card-text">Stunden (30 Tage)</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-calendar-week-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ absence_history.count }}</h4>
+                        <p class="card-text">Fehlzeiten</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-exclamation-triangle-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-md-8">
+        <!-- Wöchentlicher Stundenplan -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-week-fill me-2"></i>Mein Stundenplan</h5>
+            </div>
+            <div class="card-body">
+                {% if weekly_schedule %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Wochentag</th>
+                                    <th>Zeit</th>
+                                    <th>Fach</th>
+                                    <th>Raum</th>
+                                    <th>Lehrer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule_item in weekly_schedule %}
+                                <tr>
+                                    <td>{{ schedule_item.weekday }}</td>
+                                    <td>
+                                        {{ schedule_item.time }}
+                                        <small class="text-muted">({{ schedule_item.duration }} Min.)</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ schedule_item.group.subject.name }}</span>
+                                    </td>
+                                    <td>{{ schedule_item.classroom|default:"TBA" }}</td>
+                                    <td>
+                                        {% for teacher in schedule_item.group.teachers.all %}
+                                            {{ teacher.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Kein Stundenplan vorhanden.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Letzte Stunden -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Letzte Unterrichtsstunden</h5>
+            </div>
+            <div class="card-body">
+                {% for record in attendance_records %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <h6 class="mb-1">{{ record.lesson.group.subject.name }}</h6>
+                        <small class="text-muted">
+                            {{ record.lesson.scheduled_date|date:"d.m.Y H:i" }} •
+                            {{ record.lesson.group.name }}
+                        </small>
+                    </div>
+                    <div>
+                        {% if record.attendance.status == 'present' %}
+                            <span class="badge bg-success">Anwesend</span>
+                        {% elif record.attendance.status == 'late' %}
+                            <span class="badge bg-warning">Verspätet</span>
+                        {% elif record.attendance.status == 'excused' %}
+                            <span class="badge bg-info">Entschuldigt</span>
+                        {% else %}
+                            <span class="badge bg-danger">Abwesend</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Noch keine Unterrichtsstunden aufgezeichnet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-4">
+        <!-- Meine Fächer -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-book-fill me-2"></i>Meine Fächer</h5>
+            </div>
+            <div class="card-body">
+                {% for enrollment in active_enrollments %}
+                <div class="border-bottom py-2">
+                    <h6 class="mb-1">{{ enrollment.group.subject.name }}</h6>
+                    <p class="mb-1 small text-muted">{{ enrollment.group.name }}</p>
+                    <small class="text-muted">
+                        Lehrer:
+                        {% for teacher in enrollment.group.teachers.all %}
+                            {{ teacher.get_full_name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </small>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Keine aktiven Fächer.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Fehlzeiten -->
+        {% if absence_history %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-circle-fill me-2"></i>Letzte Fehlzeiten</h5>
+            </div>
+            <div class="card-body">
+                {% for absence in absence_history %}
+                <div class="border-bottom py-2">
+                    <h6 class="mb-1">{{ absence.subject.name }}</h6>
+                    <small class="text-muted">
+                        {{ absence.lesson_date|date:"d.m.Y" }} •
+                        {% if absence.excuse_provided %}
+                            <span class="text-success">Entschuldigt</span>
+                        {% else %}
+                            <span class="text-danger">Unentschuldigt</span>
+                        {% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

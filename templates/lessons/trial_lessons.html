@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Probestunden{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Probestunden</h1>
+        {% if user.userprofile.is_parent %}
+        <a href="{% url 'lessons:book_trial_lesson' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Probestunde buchen
+        </a>
+        {% endif %}
+    </div>
+
+    {% if trials %}
+    <div class="row">
+        {% for trial in trials %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">{{ trial.subject.name }}</h6>
+                    <small class="text-muted">
+                        {% if trial.group %}
+                            Gruppe: {{ trial.group.name }}
+                        {% else %}
+                            Einzelstunde
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <i class="fas fa-user"></i>
+                        <strong>Schüler:</strong> {{ trial.child.user.get_full_name }}
+                    </p>
+
+                    <p class="card-text">
+                        <i class="fas fa-calendar-alt"></i>
+                        <strong>Datum:</strong> {{ trial.scheduled_date|date:"d.m.Y H:i" }}
+                    </p>
+
+                    {% if trial.teacher %}
+                    <p class="card-text">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <strong>Lehrer:</strong> {{ trial.teacher.get_full_name }}
+                    </p>
+                    {% endif %}
+
+                    <p class="card-text">
+                        <strong>Status:</strong>
+                        {% if trial.status == "scheduled" %}
+                            <span class="badge bg-info">Geplant</span>
+                        {% elif trial.status == "completed" %}
+                            <span class="badge bg-success">Durchgeführt</span>
+                        {% elif trial.status == "cancelled" %}
+                            <span class="badge bg-danger">Abgesagt</span>
+                        {% elif trial.status == "no_show" %}
+                            <span class="badge bg-warning">Nicht erschienen</span>
+                        {% endif %}
+                    </p>
+
+                    {% if trial.notes %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-sticky-note"></i>
+                            <strong>Notizen:</strong> {{ trial.notes|truncatewords:15 }}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    {% if trial.feedback %}
+                    <div class="mt-2">
+                        <small class="text-success">
+                            <i class="fas fa-comment"></i>
+                            <strong>Feedback:</strong> {{ trial.feedback|truncatewords:15 }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer">
+                    <a href="{% url 'lessons:trial_lesson_detail' trial.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye"></i> Details
+                    </a>
+
+                    {% if trial.status == "completed" and trial.enrolled_after_trial %}
+                    <span class="badge bg-success ms-2">
+                        <i class="fas fa-heart"></i> Angemeldet
+                    </span>
+                    {% elif trial.status == "completed" and not trial.enrolled_after_trial %}
+                    <span class="badge bg-secondary ms-2">
+                        <i class="fas fa-times"></i> Nicht angemeldet
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Статистика для админов/учителей -->
+    {% if user.userprofile.role in "admin,accountant,teacher" %}
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h4 class="text-info">{{ total_trials }}</h4>
+                    <p class="mb-0">Gesamt</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h4 class="text-warning">
+                        {% if total_trials > 0 %}{% widthratio scheduled_count total_trials 100 %}%{% else %}0%{% endif %}
+                    </h4>
+                    <p class="mb-0">Geplant</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h4 class="text-success">
+                        {% if total_trials > 0 %}{% widthratio conducted_count total_trials 100 %}%{% else %}0%{% endif %}
+                    </h4>
+                    <p class="mb-0">Durchgeführt</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h4 class="text-primary">
+                        {% if total_trials > 0 %}{% widthratio interested_count total_trials 100 %}%{% else %}0%{% endif %}
+                    </h4>
+                    <p class="mb-0">Angemeldet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        {% if user.userprofile.is_parent %}
+            Sie haben noch keine Probestunden gebucht.
+            <a href="{% url 'lessons:book_trial_lesson' %}" class="alert-link">Jetzt buchen</a>
+        {% elif user.userprofile.is_child %}
+            Für Sie sind noch keine Probestunden geplant.
+        {% else %}
+            Es sind derzeit keine Probestunden vorhanden.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        {% if user.userprofile.is_parent %}
+        <a href="{% url 'lessons:book_trial_lesson' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Neue Probestunde buchen
+        </a>
+        {% endif %}
+        <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-users"></i> Verfügbare Gruppen
+        </a>
+        <a href="{% url 'lessons:schedule' %}" class="btn btn-outline-info">
+            <i class="fas fa-calendar-alt"></i> Stundenplan
+        </a>
+    </div>
+</div>
+{% endblock %}

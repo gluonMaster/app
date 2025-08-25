@@ -1,0 +1,25 @@
+Django==4.2.7
+psycopg2-binary==2.9.7
+python-decouple==3.8
+Pillow==10.0.1
+
+# Crispy Forms и Bootstrap
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-bootstrap-v5==1.0.11
+
+# Статические файлы и сервер
+whitenoise==6.6.0
+gunicorn==21.2.0
+
+# Фоновые задачи
+celery==5.3.4
+redis==5.0.1
+
+# Инструменты разработки
+pylint==3.0.3
+pylint-django==2.5.5
+django-stubs==4.2.7
+black==23.12.1
+isort==5.13.2
+mypy==1.8.0

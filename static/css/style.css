@@ -1,0 +1,54 @@
+/* Кастомные стили для системы */
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.card-header h5 {
+    color: #495057;
+}
+
+.notification-item.unread {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.alert {
+    border: none;
+    border-radius: 8px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 8px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .btn-group-vertical {
+        width: 100%;
+    }
+}

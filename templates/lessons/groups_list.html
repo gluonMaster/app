@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Gruppen{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Фильтры -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-filter"></i> Filter</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Fach:</label>
+                            <select class="form-select" name="subject" id="subject">
+                                <option value="">Alle Fächer</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.id }}" {% if subject_filter == subject.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ subject.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="available_only" value="true" id="available_only"
+                                       {% if request.GET.available_only %}checked{% endif %}>
+                                <label class="form-check-label" for="available_only">
+                                    Nur verfügbare Plätze
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-search"></i> Filtern
+                        </button>
+                        <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> Zurücksetzen
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <h1>Gruppen</h1>
+
+            <div class="row">
+                {% for group in groups %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ group.name }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ group.subject.name }}</h6>
+
+                            {% if group.description %}
+                                <p class="card-text">{{ group.description|truncatewords:15 }}</p>
+                            {% endif %}
+
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-users"></i>
+                                    {{ group.current_students_count }}/{{ group.max_students }} Schüler
+                                </small>
+                                {% if group.is_full %}
+                                    <span class="badge bg-danger ms-2">Voll</span>
+                                {% else %}
+                                    <span class="badge bg-success ms-2">Verfügbar</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Altersgruppe: {{ group.age_range_start }}-{{ group.age_range_end }} Jahre
+                                </small>
+                            </div>
+
+                            {% if group.teachers.all %}
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    {% for teacher in group.teachers.all %}
+                                        {{ teacher.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-footer">
+                            <a href="{% url 'lessons:group_detail' group.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Details
+                            </a>
+                            <a href="{% url 'lessons:group_schedule' group.id %}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-clock"></i> Stundenplan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Keine Gruppen gefunden. Versuchen Sie andere Filterkriterien.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

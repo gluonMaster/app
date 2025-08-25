@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Mein Profil - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Mein Profil</h5>
+                <a href="{% url 'clients:edit_profile' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil-fill"></i> Bearbeiten
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Persönliche Daten</h6>
+                        <p><strong>Name:</strong> {{ user.get_full_name }}</p>
+                        <p><strong>E-Mail:</strong> {{ user.email|default:"-" }}</p>
+                        <p><strong>Telefon:</strong> {{ user.userprofile.phone|default:"-" }}</p>
+                        {% if user.userprofile.birth_date %}
+                            <p><strong>Geburtsdatum:</strong> {{ user.userprofile.birth_date|date:"d.m.Y" }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Systemdaten</h6>
+                        <p><strong>Rolle:</strong> {{ user.userprofile.get_role_display }}</p>
+                        <p><strong>Mitglied seit:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
+                        <p><strong>Letzter Login:</strong> {{ user.last_login|date:"d.m.Y H:i"|default:"-" }}</p>
+                    </div>
+                </div>
+
+                {% if user.userprofile.address %}
+                    <hr>
+                    <h6>Adresse</h6>
+                    <p>{{ user.userprofile.address|linebreaks }}</p>
+                {% endif %}
+
+                {% if user.userprofile.is_parent and user.userprofile.iban %}
+                    <hr>
+                    <h6>Bankdaten</h6>
+                    <p><strong>IBAN:</strong> {{ user.userprofile.iban }}</p>
+                    <p><strong>BIC:</strong> {{ user.userprofile.bic|default:"-" }}</p>
+                    <p><strong>Bank:</strong> {{ user.userprofile.bank_name|default:"-" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        {% if user.userprofile.is_parent %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Meine Kinder</h6>
+                </div>
+                <div class="card-body">
+                    {% for child in user.children.all %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ child.user.get_full_name }}</span>
+                            <span class="badge bg-secondary">{{ child.age }} Jahre</span>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">Keine Kinder registriert</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if user.userprofile.is_teacher %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Lehrerinfo</h6>
+                </div>
+                <div class="card-body">
+                    {% if user.userprofile.specialization %}
+                        <p><strong>Spezialisierung:</strong><br>{{ user.userprofile.specialization }}</p>
+                    {% endif %}
+                    {% if user.userprofile.hire_date %}
+                        <p><strong>Eingestellt seit:</strong> {{ user.userprofile.hire_date|date:"d.m.Y" }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

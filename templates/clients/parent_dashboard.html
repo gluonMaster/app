@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Eltern Dashboard - Bildungszentrum{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-house-fill text-primary me-2"></i>Eltern Dashboard</h1>
+        <p class="text-muted">Willkommen, {{ user.get_full_name }}!</p>
+    </div>
+    <div>
+        <a href="{% url 'contracts:create_request' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle-fill me-2"></i>Neue Anfrage
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ children.count }}</h4>
+                        <p class="card-text">Kinder</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-people-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ active_contracts.count }}</h4>
+                        <p class="card-text">Aktive Verträge</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-file-text-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_monthly_amount|floatformat:2 }}€</h4>
+                        <p class="card-text">Monatlich</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-currency-euro display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white {% if critical_unread_count > 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ unread_notifications_count }}</h4>
+                        <p class="card-text">Benachrichtigungen</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-bell-fill display-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Critical Notifications Alert -->
+{% if critical_unread_count > 0 %}
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Wichtige Benachrichtigungen!</h4>
+    <p>Sie haben {{ critical_unread_count }} wichtige Benachrichtigung(en), die eine Bestätigung erfordern.</p>
+    <hr>
+    <a href="{% url 'clients:notifications' %}?unread=true" class="btn btn-outline-danger">
+        Jetzt anzeigen <i class="bi bi-arrow-right"></i>
+    </a>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-md-8">
+        <!-- Meine Kinder -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Meine Kinder</h5>
+            </div>
+            <div class="card-body">
+                {% if children %}
+                    <div class="row">
+                        {% for child in children %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-left-primary">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ child.user.get_full_name }}</h6>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            {{ child.age }} Jahre • {{ child.school_class }}<br>
+                                            Fächer:
+                                            {% for subject in child.current_subjects %}
+                                                <span class="badge bg-secondary">{{ subject.name }}</span>
+                                            {% empty %}
+                                                <span class="text-muted">Keine aktiven Fächer</span>
+                                            {% endfor %}
+                                        </small>
+                                    </p>
+                                    <a href="{% url 'clients:child_detail' child.id %}" class="btn btn-sm btn-outline-primary">
+                                        Details <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Noch keine Kinder registriert.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Anträge -->
+        {% if pending_requests %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-plus-fill me-2"></i>Offene Anträge</h5>
+            </div>
+            <div class="card-body">
+                {% for request in pending_requests %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <h6 class="mb-1">{{ request.get_request_type_display }}</h6>
+                        <small class="text-muted">
+                            {{ request.child.user.get_full_name }} • {{ request.created_at|date:"d.m.Y" }}
+                        </small>
+                    </div>
+                    <div>
+                        <span class="badge bg-warning">{{ request.get_status_display }}</span>
+                        <a href="{% url 'contracts:request_detail' request.id %}" class="btn btn-sm btn-outline-primary ms-2">
+                            Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-4">
+        <!-- Benachrichtigungen -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bell-fill me-2"></i>Neueste Benachrichtigungen</h5>
+            </div>
+            <div class="card-body">
+                {% for notification in recent_notifications %}
+                <div class="d-flex justify-content-between align-items-start border-bottom py-2">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 {% if not notification.is_read %}fw-bold{% endif %}">
+                            {{ notification.title }}
+                        </h6>
+                        <p class="mb-1 small">{{ notification.message|truncatewords:10 }}</p>
+                        <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                    </div>
+                    {% if not notification.is_read %}
+                        <span class="badge bg-primary">Neu</span>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">Keine neuen Benachrichtigungen.</p>
+                {% endfor %}
+
+                {% if recent_notifications %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'clients:notifications' %}" class="btn btn-sm btn-outline-primary">
+                        Alle anzeigen
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Kommende Probestunden -->
+        {% if upcoming_trials %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-check-fill me-2"></i>Probestunden</h5>
+            </div>
+            <div class="card-body">
+                {% for trial in upcoming_trials %}
+                <div class="border-bottom py-2">
+                    <h6 class="mb-1">{{ trial.subject.name }}</h6>
+                    <small class="text-muted">
+                        {{ trial.child.user.get_full_name }}<br>
+                        {{ trial.scheduled_date|date:"d.m.Y H:i" }}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

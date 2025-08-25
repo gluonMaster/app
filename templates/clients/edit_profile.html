@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Profil bearbeiten - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Profil bearbeiten</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <h6 class="mb-3">Persönliche Daten</h6>
+                    {% crispy user_form %}
+
+                    <hr>
+
+                    <h6 class="mb-3">Zusätzliche Informationen</h6>
+                    {% crispy profile_form %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Profilinformationen</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Rolle:</strong> {{ user.userprofile.get_role_display }}</p>
+                <p><strong>Mitglied seit:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
+                {% if user.userprofile.is_parent %}
+                    <p><strong>Kinder:</strong> {{ user.children.count }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

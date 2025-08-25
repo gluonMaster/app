@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Bildungszentrum{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Dashboard</h1>
+            <p class="lead">Willkommen im Bildungszentrum Verwaltungssystem</p>
+
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="bi bi-people-fill display-4 text-primary"></i>
+                            <h5 class="card-title mt-2">Kunden</h5>
+                            <p class="card-text">Verwaltung von Eltern und Kindern</p>
+                            <a href="{% url 'clients:clients_list' %}" class="btn btn-primary">Öffnen</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="bi bi-file-earmark-text display-4 text-success"></i>
+                            <h5 class="card-title mt-2">Verträge</h5>
+                            <p class="card-text">Vertragsmanagement</p>
+                            <a href="/admin/contracts/contract/" class="btn btn-success">Öffnen</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="bi bi-book display-4 text-info"></i>
+                            <h5 class="card-title mt-2">Unterricht</h5>
+                            <p class="card-text">Unterrichtsverwaltung</p>
+                            <a href="{% url 'lessons:lessons_index' %}" class="btn btn-info">Öffnen</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="bi bi-bell display-4 text-warning"></i>
+                            <h5 class="card-title mt-2">Benachrichtigungen</h5>
+                            <p class="card-text">Mitteilungen und Alerts</p>
+                            <a href="{% url 'notifications:notifications_index' %}" class="btn btn-warning">Öffnen</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Admin-Bereich</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Vollständige Verwaltung aller Systemkomponenten:</p>
+                            <a href="/admin/" class="btn btn-dark">Django Admin</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Schnellzugriff</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <a href="/admin/clients/userprofile/" class="list-group-item list-group-item-action">Benutzerprofile</a>
+                                <a href="/admin/contracts/contractchangerequest/" class="list-group-item list-group-item-action">Vertragsänderungsanträge</a>
+                                <a href="/admin/lessons/subject/" class="list-group-item list-group-item-action">Fächer</a>
+                                <a href="/admin/notifications/notification/" class="list-group-item list-group-item-action">Benachrichtigungen</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

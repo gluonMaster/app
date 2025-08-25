@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load bootstrap5 %}
+{% load client_extras %} extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block title %}Stundenplan - {{ child.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-calendar-alt"></i>
+                    Stundenplan - {{ child.user.get_full_name }}
+                </h2>
+                <div>
+                    {% if request.user == child.parent %}
+                        <a href="{% url 'clients:children_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Zurück zur Liste
+                        </a>
+                        <a href="{% url 'clients:child_detail' child.id %}" class="btn btn-info">
+                            <i class="fas fa-user"></i> Profil
+                        </a>
+                    {% elif request.user == child.user %}
+                        <a href="{% url 'clients:child_dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Zurück zum Dashboard
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Информация о ребенке -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="avatar avatar-lg mx-auto mb-2">
+                                    <div class="avatar-initial rounded-circle bg-primary fs-1">
+                                        {{ child.user.first_name|first }}{{ child.user.last_name|first }}
+                                    </div>
+                                </div>
+                                <h6 class="mb-0">{{ child.user.get_full_name }}</h6>
+                                <small class="text-muted">{{ child.age }} Jahre alt</small>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-1">GEBURTSDATUM</h6>
+                                    <p class="mb-0">{{ child.date_of_birth|date:"d.m.Y" }}</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-1">AKTIVE FÄCHER</h6>
+                                    <p class="mb-0">{{ enrollments.count }} Fach{{ enrollments.count|pluralize:"e" }}</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-1">STATUS</h6>
+                                    <p class="mb-0">
+                                        {% if child.is_active %}
+                                            <span class="badge bg-success">Aktiv</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inaktiv</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 class="text-muted mb-1">LETZTES UPDATE</h6>
+                                    <p class="mb-0">{{ child.updated_at|date:"d.m.Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if enrollments %}
+                <!-- Wochenplan -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-week"></i> Wochenplan
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered schedule-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 100px;">Zeit</th>
+                                        <th>Montag</th>
+                                        <th>Dienstag</th>
+                                        <th>Mittwoch</th>
+                                        <th>Donnerstag</th>
+                                        <th>Freitag</th>
+                                        <th>Samstag</th>
+                                        <th>Sonntag</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% comment %} Создаем временные слоты от 8:00 до 20:00 {% endcomment %}
+                                    {% for hour in "012345678910111213" %}
+                                        {% with hour_num=forloop.counter0|add:8 %}
+                                            <tr>
+                                                <td class="time-slot">{{ hour_num }}:00</td>
+                                                {% for day in "0123456" %}
+                                                    {% with day_num=forloop.counter0 %}
+                                                        <td class="schedule-cell">
+                                                            {% for enrollment in enrollments %}
+                                                                {% for schedule in enrollment.group.schedules.all %}
+                                                                    {% if schedule.is_active and schedule.weekday == day_num and schedule.start_time.hour == hour_num %}
+                                                                        <div class="lesson-block subject-{{ enrollment.group.subject.id }}">
+                                                                            <div class="lesson-subject">
+                                                                                <strong>{{ enrollment.group.subject.name }}</strong>
+                                                                            </div>
+                                                                            <div class="lesson-time">
+                                                                                {{ schedule.start_time|time:"H:i" }} -
+                                                                                {% with end_time=schedule.start_time|addtime:schedule.duration %}
+                                                                                    {{ end_time|time:"H:i" }}
+                                                                                {% endwith %}
+                                                                            </div>
+                                                                            <div class="lesson-group">
+                                                                                Gruppe: {{ enrollment.group.name }}
+                                                                            </div>
+                                                                            {% if schedule.classroom %}
+                                                                                <div class="lesson-classroom">
+                                                                                    <i class="fas fa-map-marker-alt"></i> {{ schedule.classroom }}
+                                                                                </div>
+                                                                            {% endif %}
+                                                                            <div class="lesson-teachers">
+                                                                                {% for teacher in enrollment.group.teachers.all %}
+                                                                                    <small class="text-muted">{{ teacher.get_full_name }}</small>
+                                                                                    {% if not forloop.last %}, {% endif %}
+                                                                                {% endfor %}
+                                                                            </div>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            {% endfor %}
+                                                        </td>
+                                                    {% endwith %}
+                                                {% endfor %}
+                                            </tr>
+                                        {% endwith %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Детали курсов -->
+                <div class="row">
+                    {% for enrollment in enrollments %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-book"></i>
+                                        {{ enrollment.group.subject.name }}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4"><strong>Gruppe:</strong></div>
+                                        <div class="col-sm-8">{{ enrollment.group.name }}</div>
+                                    </div>
+
+                                    {% if enrollment.group.subject.description %}
+                                        <div class="row mb-2">
+                                            <div class="col-sm-4"><strong>Beschreibung:</strong></div>
+                                            <div class="col-sm-8">{{ enrollment.group.subject.description|truncatechars:100 }}</div>
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4"><strong>Status:</strong></div>
+                                        <div class="col-sm-8">
+                                            {% if enrollment.status == 'active' %}
+                                                <span class="badge bg-success">{{ enrollment.get_status_display }}</span>
+                                            {% elif enrollment.status == 'suspended' %}
+                                                <span class="badge bg-warning">{{ enrollment.get_status_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ enrollment.get_status_display }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4"><strong>Beginn:</strong></div>
+                                        <div class="col-sm-8">{{ enrollment.enrollment_date|date:"d.m.Y" }}</div>
+                                    </div>
+
+                                    {% if enrollment.group.teachers.exists %}
+                                        <div class="row mb-2">
+                                            <div class="col-sm-4"><strong>Lehrer:</strong></div>
+                                            <div class="col-sm-8">
+                                                {% for teacher in enrollment.group.teachers.all %}
+                                                    {{ teacher.get_full_name }}
+                                                    {% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Расписание для этой группы -->
+                                    {% if enrollment.group.schedules.exists %}
+                                        <div class="mt-3">
+                                            <strong>Stundenplan:</strong>
+                                            <ul class="list-unstyled mt-2">
+                                                {% for schedule in enrollment.group.schedules.all %}
+                                                    {% if schedule.is_active %}
+                                                        <li class="mb-1">
+                                                            <span class="badge bg-light text-dark">
+                                                                {{ schedule.get_weekday_display }}
+                                                            </span>
+                                                            {{ schedule.start_time|time:"H:i" }} -
+                                                            {% with end_time=schedule.start_time|addtime:schedule.duration %}
+                                                                {{ end_time|time:"H:i" }}
+                                                            {% endwith %}
+                                                            {% if schedule.classroom %}
+                                                                <br><small class="text-muted">
+                                                                    <i class="fas fa-map-marker-alt"></i> {{ schedule.classroom }}
+                                                                </small>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            ID: {{ enrollment.group.id }}
+                                        </small>
+                                        {% if request.user == child.parent %}
+                                            <a href="{% url 'clients:child_attendance' child.id %}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line"></i> Anwesenheit
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Нет активных записей -->
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-calendar-times fa-4x text-muted"></i>
+                        </div>
+                        <h4 class="text-muted">Keine aktiven Kurse</h4>
+                        <p class="text-muted mb-4">
+                            {{ child.user.first_name }} ist derzeit in keinen Kursen eingeschrieben.
+                        </p>
+                        {% if request.user == child.parent %}
+                            <a href="{% url 'contracts:create_request' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Kurs hinzufügen
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.schedule-table {
+    font-size: 0.875rem;
+}
+
+.schedule-cell {
+    vertical-align: top;
+    position: relative;
+    height: 60px;
+    padding: 2px;
+}
+
+.time-slot {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.lesson-block {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 4px 6px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.lesson-block.subject-1 { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
+.lesson-block.subject-2 { background: linear-gradient(135deg, #dc3545 0%, #a71e2a 100%); }
+.lesson-block.subject-3 { background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%); color: #212529; }
+.lesson-block.subject-4 { background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%); }
+.lesson-block.subject-5 { background: linear-gradient(135deg, #6f42c1 0%, #59359a 100%); }
+.lesson-block.subject-6 { background: linear-gradient(135deg, #fd7e14 0%, #d35400 100%); }
+
+.lesson-subject {
+    font-weight: bold;
+    margin-bottom: 1px;
+}
+
+.lesson-time {
+    font-size: 0.65rem;
+    opacity: 0.9;
+}
+
+.lesson-group {
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.lesson-classroom {
+    font-size: 0.6rem;
+    opacity: 0.8;
+}
+
+.lesson-teachers {
+    font-size: 0.6rem;
+    opacity: 0.8;
+    margin-top: 1px;
+}
+
+@media (max-width: 768px) {
+    .schedule-table {
+        font-size: 0.75rem;
+    }
+
+    .schedule-cell {
+        height: 80px;
+    }
+
+    .lesson-block {
+        font-size: 0.7rem;
+        padding: 3px 4px;
+    }
+}
+</style>
+
+{% endblock %}

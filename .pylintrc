@@ -1,0 +1,70 @@
+[MAIN]
+# Django settings module
+django-settings-module = educational_center.settings
+
+# Load Django plugin
+load-plugins = pylint_django
+
+# Files or directories to be skipped
+ignore = migrations
+
+[MASTER]
+# List of plugins (as comma separated values of python module names) to load
+extension-pkg-whitelist = pydantic
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length = 120
+
+# String used as indentation unit
+indent-string = '    '
+
+[MESSAGES CONTROL]
+# Disable specific warnings for Django
+disable =
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    no-member,
+    unused-import,
+    import-error,
+    unused-argument,
+    invalid-name,
+    line-too-long,
+    trailing-whitespace,
+    unused-variable,
+    attribute-defined-outside-init,
+    arguments-differ,
+    abstract-method,
+    super-init-not-called,
+    useless-super-delegation,
+    # Django специфичные отключения
+    no-name-in-module,
+    import-outside-toplevel,
+    unused-wildcard-import,
+    wildcard-import,
+    django-not-configured,
+    # Отключаем ошибки доступа к атрибутам Django ORM
+    no-member,
+    access-member-before-definition,
+    attribute-defined-outside-init
+
+[VARIABLES]
+# Tells whether we should check for unused import in __init__ files
+init-import = no
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args = 10
+
+# Maximum number of locals for function / method body
+max-locals = 25
+
+[CLASSES]
+# List of method names used to declare (i.e. assign) instance attributes
+defining-attr-methods = __init__, __new__, setUp, __post_init__
+
+[DJANGO]
+# Django configuration
+django-settings-module = educational_center.settings

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Stundenplan{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Stundenplan</h1>
+
+    {% if weekly_schedule %}
+    <div class="row">
+        {% for day, schedules in weekly_schedule.items %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-day"></i> {{ day }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if schedules %}
+                    <div class="list-group list-group-flush">
+                        {% for schedule in schedules %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ schedule.group.name }}</h6>
+                                <small class="text-muted">{{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}</small>
+                            </div>
+                            <p class="mb-1">
+                                <span class="badge bg-secondary">{{ schedule.group.subject.name }}</span>
+                                {% if schedule.room %}
+                                    <span class="badge bg-info">{{ schedule.room }}</span>
+                                {% endif %}
+                            </p>
+                            {% if schedule.group.teachers.all %}
+                            <small class="text-muted">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                {% for teacher in schedule.group.teachers.all %}
+                                    {{ teacher.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </small>
+                            {% endif %}
+                            <div class="mt-1">
+                                <a href="{% url 'lessons:group_detail' schedule.group.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Details
+                                </a>
+                                {% if user.userprofile.is_teacher and user in schedule.group.teachers.all %}
+                                <a href="{% url 'lessons:teacher_lessons' %}" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-chalkboard"></i> Stunden
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Keine Unterrichtsstunden an diesem Tag.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        Der Stundenplan ist derzeit leer. Es wurden noch keine Unterrichtsstunden geplant.
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'lessons:weekly_schedule' %}" class="btn btn-primary">
+            <i class="fas fa-table"></i> Wochenansicht
+        </a>
+        <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-info">
+            <i class="fas fa-users"></i> Alle Gruppen
+        </a>
+        {% if user.userprofile.is_parent %}
+        <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-success">
+            <i class="fas fa-play"></i> Probestunde buchen
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

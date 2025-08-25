@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Anwesenheit{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Anwesenheit</h1>
+
+    {% if absences %}
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-calendar-check"></i> Anwesenheitshistorie</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            {% if user.userprofile.role in "admin,accountant,teacher" %}
+                            <th><i class="fas fa-user"></i> Schüler</th>
+                            {% endif %}
+                            <th><i class="fas fa-calendar-alt"></i> Datum</th>
+                            <th><i class="fas fa-book"></i> Fach</th>
+                            <th><i class="fas fa-users"></i> Gruppe</th>
+                            <th><i class="fas fa-exclamation-triangle"></i> Art des Fehlens</th>
+                            <th><i class="fas fa-file-medical"></i> Entschuldigung</th>
+                            <th><i class="fas fa-sticky-note"></i> Notizen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for absence in absences %}
+                        <tr>
+                            {% if user.userprofile.role in "admin,accountant,teacher" %}
+                            <td>{{ absence.child.user.get_full_name }}</td>
+                            {% endif %}
+                            <td>{{ absence.lesson_date|date:"d.m.Y" }}</td>
+                            <td>{{ absence.subject.name }}</td>
+                            <td>
+                                {% if absence.group %}
+                                    <a href="{% url 'lessons:group_detail' absence.group.id %}">{{ absence.group.name }}</a>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if absence.absence_type == "absent" %}
+                                    <span class="badge bg-danger">Unentschuldigt</span>
+                                {% elif absence.absence_type == "excused" %}
+                                    <span class="badge bg-warning">Entschuldigt</span>
+                                {% elif absence.absence_type == "late" %}
+                                    <span class="badge bg-info">Verspätet</span>
+                                {% elif absence.absence_type == "sick" %}
+                                    <span class="badge bg-secondary">Krank</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if absence.excuse_provided %}
+                                    <i class="fas fa-check text-success"></i> Ja
+                                {% else %}
+                                    <i class="fas fa-times text-danger"></i> Nein
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if absence.notes %}
+                                    <span title="{{ absence.notes }}">{{ absence.notes|truncatewords:5 }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h4 class="text-primary">{{ total_absences }}</h4>
+                    <p class="mb-0">Gesamte Fehlzeiten</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h4 class="text-danger">
+                        {{ absent_count }}
+                    </h4>
+                    <p class="mb-0">Unentschuldigt</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h4 class="text-warning">
+                        {{ excused_count }}
+                    </h4>
+                    <p class="mb-0">Entschuldigt</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h4 class="text-success">
+                        {% if total_absences > 0 %}{% widthratio excused_count total_absences 100 %}%{% else %}0%{% endif %}
+                    </h4>
+                    <p class="mb-0">Mit Entschuldigung</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        {% if user.userprofile.is_child %}
+            Hervorragend! Sie haben keine Fehlzeiten.
+        {% elif user.userprofile.is_parent %}
+            Hervorragend! Ihre Kinder haben keine Fehlzeiten.
+        {% else %}
+            Keine Fehlzeiten vorhanden.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        {% if user.userprofile.is_teacher %}
+        <a href="{% url 'lessons:teacher_lessons' %}" class="btn btn-success">
+            <i class="fas fa-chalkboard"></i> Meine Unterrichtsstunden
+        </a>
+        <a href="{% url 'lessons:teacher_students' %}" class="btn btn-info">
+            <i class="fas fa-user-graduate"></i> Meine Schüler
+        </a>
+        {% endif %}
+
+        <a href="{% url 'lessons:schedule' %}" class="btn btn-outline-primary">
+            <i class="fas fa-calendar-alt"></i> Stundenplan
+        </a>
+
+        {% if user.userprofile.is_parent or user.userprofile.is_child %}
+        <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-info">
+            <i class="fas fa-users"></i> Meine Gruppen
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

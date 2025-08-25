@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Wochenplan{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1>Wochenplan</h1>
+    <p class="text-muted">Woche vom {{ week_start|date:"d.m.Y" }}</p>
+
+    {% if schedules %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 100px;">Uhrzeit</th>
+                    <th>Montag</th>
+                    <th>Dienstag</th>
+                    <th>Mittwoch</th>
+                    <th>Donnerstag</th>
+                    <th>Freitag</th>
+                    <th>Samstag</th>
+                    <th>Sonntag</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% regroup schedules by start_time as time_groups %}
+                {% for time_group in time_groups %}
+                <tr>
+                    <td class="table-secondary">
+                        <strong>{{ time_group.grouper|time:"H:i" }}</strong>
+                    </td>
+                    {% for day in "1234567"|make_list %}
+                        <td>
+                            {% for schedule in time_group.list %}
+                                {% if schedule.weekday|stringformat:"s" == day %}
+                                <div class="card border-primary mb-2">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1">
+                                            <a href="{% url 'lessons:group_detail' schedule.group.id %}" class="text-decoration-none">
+                                                {{ schedule.group.name }}
+                                            </a>
+                                        </h6>
+                                        <p class="card-text mb-1">
+                                            <small class="text-muted">{{ schedule.group.subject.name }}</small>
+                                        </p>
+                                        {% if schedule.room %}
+                                        <p class="card-text mb-1">
+                                            <small><i class="fas fa-map-marker-alt"></i> {{ schedule.room }}</small>
+                                        </p>
+                                        {% endif %}
+                                        {% if schedule.group.teachers.all %}
+                                        <p class="card-text mb-1">
+                                            <small>
+                                                <i class="fas fa-chalkboard-teacher"></i>
+                                                {% for teacher in schedule.group.teachers.all %}
+                                                    {{ teacher.get_full_name|truncatechars:15 }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        </p>
+                                        {% endif %}
+                                        <p class="card-text mb-0">
+                                            <small class="text-success">
+                                                <i class="fas fa-clock"></i>
+                                                {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                                            </small>
+                                        </p>
+                                        {% if user.userprofile.is_teacher and user in schedule.group.teachers.all %}
+                                        <div class="mt-1">
+                                            <a href="{% url 'lessons:teacher_lessons' %}" class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-chalkboard"></i>
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        Keine Unterrichtsstunden geplant
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Легенда -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Legende</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-map-marker-alt"></i> = Raum</li>
+                                <li><i class="fas fa-chalkboard-teacher"></i> = Lehrer</li>
+                                <li><i class="fas fa-clock"></i> = Uhrzeit</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><span class="badge bg-primary">Gruppenname</span> = Anklickbar für Details</li>
+                                <li><i class="fas fa-chalkboard"></i> = Unterrichtsstunden (nur für Lehrer)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        {% if user.userprofile.is_child %}
+            Sie sind derzeit in keiner Gruppe eingeschrieben.
+        {% elif user.userprofile.is_teacher %}
+            Sie haben derzeit keine Gruppen zugewiesen.
+        {% else %}
+            Der Wochenplan ist derzeit leer. Es wurden noch keine Unterrichtsstunden geplant.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'lessons:schedule' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list"></i> Tagesansicht
+        </a>
+        <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-info">
+            <i class="fas fa-users"></i> Alle Gruppen
+        </a>
+        {% if user.userprofile.is_parent %}
+        <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-success">
+            <i class="fas fa-play"></i> Probestunde buchen
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

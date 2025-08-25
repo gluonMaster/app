@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Уроки - Bildungszentrum{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Система управления уроками</h1>
+
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-book display-4 text-primary"></i>
+                            <h5 class="card-title mt-2">Предметы</h5>
+                            <p class="card-text">Управление предметами и курсами</p>
+                            <a href="{% url 'lessons:subjects_list' %}" class="btn btn-primary">Перейти</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-people display-4 text-success"></i>
+                            <h5 class="card-title mt-2">Группы</h5>
+                            <p class="card-text">Управление учебными группами</p>
+                            <a href="{% url 'lessons:groups_list' %}" class="btn btn-success">Перейти</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-calendar-week display-4 text-info"></i>
+                            <h5 class="card-title mt-2">Расписание</h5>
+                            <p class="card-text">Просмотр и управление расписанием</p>
+                            <a href="{% url 'lessons:schedule' %}" class="btn btn-info">Перейти</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-calendar-check display-4 text-warning"></i>
+                            <h5 class="card-title mt-2">Посещаемость</h5>
+                            <p class="card-text">Отметка и просмотр посещаемости</p>
+                            <a href="{% url 'lessons:attendance' %}" class="btn btn-warning">Перейти</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-star display-4 text-purple"></i>
+                            <h5 class="card-title mt-2">Пробные уроки</h5>
+                            <p class="card-text">Управление пробными занятиями</p>
+                            <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-secondary">Перейти</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

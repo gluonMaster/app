@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Stundenplan: {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-calendar-alt"></i> Stundenplan: {{ group.name }}</h3>
+                    <p class="mb-0 text-muted">{{ group.subject.name }}</p>
+                </div>
+                <div class="card-body">
+                    {% if schedules %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th><i class="fas fa-calendar-day"></i> Wochentag</th>
+                                    <th><i class="fas fa-clock"></i> Uhrzeit</th>
+                                    <th><i class="fas fa-door-open"></i> Raum</th>
+                                    <th><i class="fas fa-chalkboard-teacher"></i> Lehrer</th>
+                                    <th><i class="fas fa-info-circle"></i> Zusätzliche Informationen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ schedule.get_weekday_display }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            Dauer:
+                                            {% widthratio schedule.duration.total_seconds 60 1 %} Min.
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if schedule.room %}
+                                            <i class="fas fa-map-marker-alt"></i> {{ schedule.room }}
+                                        {% else %}
+                                            <span class="text-muted">Nicht angegeben</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if group.teachers.all %}
+                                            {% for teacher in group.teachers.all %}
+                                                <div>
+                                                    <i class="fas fa-user"></i> {{ teacher.get_full_name }}
+                                                    {% if teacher.email %}
+                                                        <br><small class="text-muted">{{ teacher.email }}</small>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted">Kein Lehrer zugewiesen</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if schedule.notes %}
+                                            <small>{{ schedule.notes }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Дополнительная информация -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Gruppeninformationen</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        <li><strong>Fach:</strong> {{ group.subject.name }}</li>
+                                        <li><strong>Altersgruppe:</strong> {{ group.age_range_start }}-{{ group.age_range_end }} Jahre</li>
+                                        <li><strong>Aktuelle Schüler:</strong> {{ group.current_students_count }}/{{ group.max_students }}</li>
+                                        <li><strong>Status:</strong>
+                                            {% if group.is_active %}
+                                                <span class="badge bg-success">Aktiv</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inaktiv</span>
+                                            {% endif %}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-clock"></i> Unterrichtszeiten</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">
+                                        <strong>Unterrichtsstunden pro Woche:</strong> {{ schedules.count }}
+                                    </p>
+                                    {% if schedules %}
+                                    <p class="mb-0">
+                                        <strong>Gesamtdauer pro Woche:</strong>
+                                        {% with total_minutes=schedules|length %}
+                                            {% if total_minutes %}
+                                                ca. {% widthratio total_minutes 1 90 %} Minuten
+                                            {% endif %}
+                                        {% endwith %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Für diese Gruppe ist noch kein Stundenplan festgelegt.
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer">
+                    <a href="{% url 'lessons:group_detail' group.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Zurück zur Gruppe
+                    </a>
+                    <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> Alle Gruppen
+                    </a>
+                    {% if user.userprofile.is_parent %}
+                    <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-success">
+                        <i class="fas fa-play"></i> Probestunde buchen
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Meine Unterrichtsstunden{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Фильтры -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-filter"></i> Filter</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status:</label>
+                            <select class="form-select" name="status" id="status">
+                                <option value="all" {% if status_filter == "all" %}selected{% endif %}>Alle</option>
+                                {% for value, label in lesson_statuses %}
+                                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Zeitraum:</label>
+                            <select class="form-select" name="date" id="date">
+                                <option value="week" {% if date_filter == "week" %}selected{% endif %}>Diese Woche</option>
+                                <option value="today" {% if date_filter == "today" %}selected{% endif %}>Heute</option>
+                                <option value="month" {% if date_filter == "month" %}selected{% endif %}>Dieser Monat</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-search"></i> Filtern
+                        </button>
+                        <a href="{% url 'lessons:teacher_lessons' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-times"></i> Zurücksetzen
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <h1>Meine Unterrichtsstunden</h1>
+
+            {% if lessons %}
+            <div class="row">
+                {% for lesson in lessons %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">{{ lesson.group.name }}</h6>
+                            <small class="text-muted">{{ lesson.group.subject.name }}</small>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ lesson.scheduled_date|date:"d.m.Y H:i" }}
+                            </p>
+
+                            <p class="card-text">
+                                <i class="fas fa-user-graduate"></i>
+                                {{ lesson.group.current_students_count }} Schüler
+                            </p>
+
+                            <p class="card-text">
+                                Status:
+                                {% if lesson.status == "scheduled" %}
+                                    <span class="badge bg-info">Geplant</span>
+                                {% elif lesson.status == "conducted" %}
+                                    <span class="badge bg-success">Durchgeführt</span>
+                                {% elif lesson.status == "cancelled" %}
+                                    <span class="badge bg-danger">Abgesagt</span>
+                                {% elif lesson.status == "rescheduled" %}
+                                    <span class="badge bg-warning">Verschoben</span>
+                                {% endif %}
+                            </p>
+
+                            {% if lesson.lesson_content %}
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-book-open"></i>
+                                    {{ lesson.lesson_content|truncatewords:10 }}
+                                </small>
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-footer">
+                            <a href="{% url 'lessons:teacher_lesson_detail' lesson.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Details
+                            </a>
+
+                            {% if lesson.status == "scheduled" %}
+                            <a href="{% url 'lessons:mark_lesson_attendance' lesson.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-check"></i> Anwesenheit
+                            </a>
+                            {% elif lesson.status == "conducted" %}
+                            <a href="{% url 'lessons:update_lesson_content' lesson.id %}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-edit"></i> Bearbeiten
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Keine Unterrichtsstunden für die ausgewählten Filter gefunden.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

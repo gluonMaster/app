@@ -1,0 +1,80 @@
+{
+    "name": "Educational Center Django",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "web",
+    "workspaceFolder": "/app",
+    "shutdownAction": "stopCompose",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.pylint",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "ms-toolsai.jupyter",
+                "batisteo.vscode-django",
+                "wholroyd.jinja",
+                "bradlc.vscode-tailwindcss",
+                "formulahendry.auto-rename-tag",
+                "christian-kohler.path-intellisense",
+                "GitHub.copilot",
+                "GitHub.copilot-chat"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.formatting.provider": "black",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.linting.pylintArgs": [
+                    "--load-plugins=pylint_django",
+                    "--django-settings-module=educational_center.settings",
+                    "--disable=C0114,C0115,C0116,C0303,C0304,E1101,E1135,E1136,R0903,R0913,W0613,C0103"
+                ],
+                "python.analysis.autoImportCompletions": true,
+                "python.analysis.typeCheckingMode": "off",
+                "python.analysis.diagnosticSeverityOverrides": {
+                    "reportGeneralTypeIssues": "none",
+                    "reportOptionalMemberAccess": "none",
+                    "reportUnknownMemberType": "none"
+                },
+                "files.exclude": {
+                    "**/__pycache__": true,
+                    "**/*.pyc": true,
+                    "**/migrations": true
+                },
+                "files.trimTrailingWhitespace": true,
+                "files.insertFinalNewline": true,
+                "editor.formatOnSave": true,
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": true
+                    }
+                },
+                "github.copilot.enable": {
+                    "*": true,
+                    "python": true,
+                    "javascript": true,
+                    "typescript": true,
+                    "html": true,
+                    "css": true
+                }
+            }
+        }
+    },
+
+    "postCreateCommand": "pip install -r requirements.txt && git config --global --add safe.directory /app && echo 'Container setup complete!'",
+
+    "remoteUser": "app",
+
+    // Проброс сетевых портов для лучшей работы с внешними сервисами
+    "forwardPorts": [8000],
+
+    // Переменные окружения
+    "containerEnv": {
+        "PYTHONPATH": "/app",
+        "DJANGO_SETTINGS_MODULE": "educational_center.settings"
+    }
+}

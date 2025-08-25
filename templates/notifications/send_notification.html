@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Benachrichtigung senden{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-send text-primary me-2"></i>Benachrichtigung senden</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                {% crispy form %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>Hinweise</h6>
+            </div>
+            <div class="card-body">
+                <small>
+                    <strong>Prioritäten:</strong><br>
+                    • Niedrig: Normale Information<br>
+                    • Normal: Standard<br>
+                    • Hoch: Wichtige Mitteilung<br>
+                    • Kritisch: Erfordert Bestätigung<br><br>
+                    
+                    <strong>Typen:</strong><br>
+                    • Vertragsänderung: Für Vertragsmodifikationen<br>
+                    • Preisänderung: Bei Preisanpassungen<br>
+                    • Allgemein: Für sonstige Mitteilungen
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

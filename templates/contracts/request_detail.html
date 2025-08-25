@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block title %}Antrag Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-alt"></i> Antrag #{{ contract_request.id }}
+                    </h4>
+                    <div>
+                        {% if contract_request.status == 'pending' %}
+                            <span class="badge bg-warning fs-6">{{ contract_request.get_status_display }}</span>
+                        {% elif contract_request.status == 'approved' %}
+                            <span class="badge bg-success fs-6">{{ contract_request.get_status_display }}</span>
+                        {% elif contract_request.status == 'rejected' %}
+                            <span class="badge bg-danger fs-6">{{ contract_request.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">{{ contract_request.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Основная информация -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">ANTRAGSINFORMATIONEN</h6>
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">Erstellt am:</td>
+                                    <td>{{ contract_request.created_at|date:"d.m.Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Typ:</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ contract_request.get_request_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Vertrag:</td>
+                                    <td>
+                                        <a href="{% url 'contracts:contract_detail' contract_request.contract.id %}">
+                                            {{ contract_request.contract.contract_number }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% if contract_request.estimated_change %}
+                                <tr>
+                                    <td class="fw-bold">Geschätzte Änderung:</td>
+                                    <td>
+                                        {% if contract_request.estimated_change > 0 %}
+                                            <span class="text-success fw-bold">+{{ contract_request.estimated_change|floatformat:2 }}€</span>
+                                        {% elif contract_request.estimated_change < 0 %}
+                                            <span class="text-danger fw-bold">{{ contract_request.estimated_change|floatformat:2 }}€</span>
+                                        {% else %}
+                                            <span class="text-muted">0.00€</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">BEARBEITUNGSSTATUS</h6>
+                            <table class="table table-borderless table-sm">
+                                {% if contract_request.processed_at %}
+                                <tr>
+                                    <td class="fw-bold">Bearbeitet am:</td>
+                                    <td>{{ contract_request.processed_at|date:"d.m.Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if contract_request.processed_by %}
+                                <tr>
+                                    <td class="fw-bold">Bearbeitet von:</td>
+                                    <td>{{ contract_request.processed_by.get_full_name }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if contract_request.admin_notes %}
+                                <tr>
+                                    <td class="fw-bold">Admin Notizen:</td>
+                                    <td>{{ contract_request.admin_notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Beschreibung -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">BESCHREIBUNG</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ contract_request.description|linebreaks }}
+                        </div>
+                    </div>
+
+                    <!-- Details zu Kind und Fach -->
+                    {% if contract_request.child or contract_request.subject %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">DETAILS</h6>
+                        <div class="row">
+                            {% if contract_request.child %}
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-child"></i> Kind
+                                        </h6>
+                                        <p class="card-text">
+                                            <strong>{{ contract_request.child.user.get_full_name }}</strong><br>
+                                            <small class="text-muted">{{ contract_request.child.age }} Jahre alt</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if contract_request.subject %}
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-book"></i> Fach
+                                        </h6>
+                                        <p class="card-text">
+                                            <strong>{{ contract_request.subject.name }}</strong><br>
+                                            {% if contract_request.subject.description %}
+                                                <small class="text-muted">{{ contract_request.subject.description|truncatechars:100 }}</small>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Zeitlinie -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">BEARBEITUNGSVERLAUF</h6>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <strong>Antrag eingereicht</strong>
+                                        <small class="text-muted ms-2">{{ contract_request.created_at|date:"d.m.Y H:i" }}</small>
+                                    </div>
+                                    <div class="timeline-body">
+                                        Antrag wurde von {{ contract_request.parent.get_full_name }} eingereicht.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if contract_request.processed_at %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker
+                                    {% if contract_request.status == 'approved' %}bg-success
+                                    {% elif contract_request.status == 'rejected' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <strong>Antrag {{ contract_request.get_status_display|lower }}</strong>
+                                        <small class="text-muted ms-2">{{ contract_request.processed_at|date:"d.m.Y H:i" }}</small>
+                                    </div>
+                                    <div class="timeline-body">
+                                        {% if contract_request.processed_by %}
+                                            Bearbeitet von {{ contract_request.processed_by.get_full_name }}.
+                                        {% endif %}
+                                        {% if contract_request.admin_notes %}
+                                            <br><em>"{{ contract_request.admin_notes }}"</em>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Aktionen -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'contracts:requests_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Zurück zur Liste
+                        </a>
+
+                        {% if contract_request.status == 'pending' and contract_request.parent == request.user %}
+                        <div>
+                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                <i class="fas fa-times"></i> Antrag zurückziehen
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для отмены заявки -->
+{% if contract_request.status == 'pending' and contract_request.parent == request.user %}
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Antrag zurückziehen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sind Sie sicher, dass Sie diesen Antrag zurückziehen möchten?</p>
+                <p><small class="text-muted">Diese Aktion kann nicht rückgängig gemacht werden.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" class="btn btn-danger">Zurückziehen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 3px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.timeline-header {
+    margin-bottom: 5px;
+}
+
+.timeline-body {
+    color: #6c757d;
+}
+</style>
+{% endblock %}

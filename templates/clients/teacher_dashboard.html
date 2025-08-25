@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Lehrer Dashboard{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-person-badge-fill text-primary me-2"></i>Lehrer Dashboard</h1>
+<p class="text-muted">Willkommen, {{ user.get_full_name }}!</p>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h4>{{ teacher_groups.count }}</h4>
+                <p>Gruppen</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h4>{{ total_students }}</h4>
+                <p>Schüler</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h4>{{ conducted_lessons_this_month }}</h4>
+                <p>Stunden (Monat)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h4>{{ pending_lessons.count }}</h4>
+                <p>Ausstehend</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Heutige Stunden -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-calendar-day-fill me-2"></i>Heute geplant</h5>
+            </div>
+            <div class="card-body">
+                {% for lesson in today_lessons %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <h6>{{ lesson.group.name }}</h6>
+                        <small class="text-muted">{{ lesson.scheduled_date|time:"H:i" }} - {{ lesson.group.subject.name }}</small>
+                    </div>
+                    <div>
+                        <span class="badge {% if lesson.status == 'conducted' %}bg-success{% elif lesson.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                            {{ lesson.get_status_display }}
+                        </span>
+                        {% if lesson.status == 'scheduled' %}
+                        <a href="{% url 'lessons:teacher_lesson_detail' lesson.id %}" class="btn btn-sm btn-primary ms-2">
+                            Bearbeiten
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">Keine Stunden für heute geplant.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Meine Gruppen -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-people-fill me-2"></i>Meine Gruppen</h5>
+            </div>
+            <div class="card-body">
+                {% for group in teacher_groups %}
+                <div class="border-bottom py-2">
+                    <h6>{{ group.name }}</h6>
+                    <small class="text-muted">
+                        {{ group.subject.name }} • {{ group.current_enrollment_count }} Schüler
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

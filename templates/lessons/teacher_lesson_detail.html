@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Unterricht Details{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-journal-text text-primary me-2"></i>Unterricht: {{ lesson.group.name }}</h1>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Unterrichtsdetails</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Fach:</strong> {{ lesson.group.subject.name }}</p>
+                <p><strong>Geplant:</strong> {{ lesson.scheduled_date|date:"d.m.Y H:i" }}</p>
+                <p><strong>Dauer:</strong> {{ lesson.duration }} Minuten</p>
+                <p><strong>Status:</strong> 
+                    <span class="badge {% if lesson.status == 'conducted' %}bg-success{% elif lesson.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                        {{ lesson.get_status_display }}
+                    </span>
+                </p>
+                {% if lesson.is_substitution %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Vertretungsstunde
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>Teilnehmer</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Eingeschriebene Schüler:</strong> {{ enrolled_students.count }}</p>
+                {% for enrollment in enrolled_students %}
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                        <span>{{ enrollment.child.user.get_full_name }}</span>
+                        {% if enrollment.child.id in attendance_dict %}
+                            {% with attendance_dict|get_item:enrollment.child.id as attendance %}
+                                <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ attendance.get_status_display }}
+                                </span>
+                            {% endwith %}
+                        {% else %}
+                            <span class="badge bg-secondary">Nicht markiert</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if lesson.status == 'scheduled' %}
+<div class="card">
+    <div class="card-header">
+        <h5>Anwesenheit markieren</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'lessons:mark_lesson_attendance' lesson.id %}">
+            {% csrf_token %}
+            
+            <!-- Unterrichtsinhalt -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="lesson_content" class="form-label">Unterrichtsinhalt</label>
+                    <textarea name="lesson_content" class="form-control" rows="3">{{ lesson.lesson_content }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label for="homework_assigned" class="form-label">Hausaufgaben</label>
+                    <textarea name="homework_assigned" class="form-control" rows="3">{{ lesson.homework_assigned }}</textarea>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notizen</label>
+                <textarea name="notes" class="form-control" rows="2">{{ lesson.notes }}</textarea>
+            </div>
+            
+            <!-- Anwesenheitsliste -->
+            <h6>Anwesenheitsliste</h6>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Schüler</th>
+                            <th>Status</th>
+                            <th>Ankunft</th>
+                            <th>Abgang</th>
+                            <th>Notizen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrolled_students %}
+                        <tr>
+                            <td><strong>{{ enrollment.child.user.get_full_name }}</strong></td>
+                            <td>
+                                <select name="attendance_{{ enrollment.child.id }}" class="form-select form-select-sm">
+                                    <option value="present" selected>Anwesend</option>
+                                    <option value="late">Verspätet</option>
+                                    <option value="absent">Abwesend</option>
+                                    <option value="excused">Entschuldigt</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="time" name="arrival_time_{{ enrollment.child.id }}" class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <input type="time" name="departure_time_{{ enrollment.child.id }}" class="form-control form-control-sm">
+                            </td>
+                            <td>
+                                <input type="text" name="notes_{{ enrollment.child.id }}" class="form-control form-control-sm" placeholder="Notizen...">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle me-2"></i>Anwesenheit speichern
+            </button>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-header">
+        <h5>Unterrichtsinhalt</h5>
+    </div>
+    <div class="card-body">
+        {% if lesson.lesson_content %}
+            <h6>Inhalt:</h6>
+            <p>{{ lesson.lesson_content }}</p>
+        {% endif %}
+        
+        {% if lesson.homework_assigned %}
+            <h6>Hausaufgaben:</h6>
+            <p>{{ lesson.homework_assigned }}</p>
+        {% endif %}
+        
+        {% if lesson.notes %}
+            <h6>Notizen:</h6>
+            <p>{{ lesson.notes }}</p>
+        {% endif %}
+        
+        {% if lesson.status == 'conducted' %}
+            <a href="{% url 'lessons:update_lesson_content' lesson.id %}" class="btn btn-outline-primary">
+                Inhalt bearbeiten
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

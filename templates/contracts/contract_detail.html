@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+                <div>
+                    <a href="{% url 'contracts:contracts_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Zurück zur Liste
+                    </a>
+                    {% if contract.parent == request.user %}
+                    <a href="{% url 'contracts:create_request' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Änderung beantragen
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Информация о контракте -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-contract"></i> Vertragsinformationen
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Vertragsnummer:</strong></td>
+                                    <td>{{ contract.contract_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Typ:</strong></td>
+                                    <td>
+                                        <span class="badge badge-primary">
+                                            {{ contract.get_contract_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if contract.status == 'active' %}
+                                            <span class="badge badge-success">{{ contract.get_status_display }}</span>
+                                        {% elif contract.status == 'suspended' %}
+                                            <span class="badge badge-warning">{{ contract.get_status_display }}</span>
+                                        {% elif contract.status == 'terminated' %}
+                                            <span class="badge badge-danger">{{ contract.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ contract.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Erstellt am:</strong></td>
+                                    <td>{{ contract.created_at|date:"d.m.Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Gültig ab:</strong></td>
+                                    <td>{{ contract.start_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                {% if contract.end_date %}
+                                <tr>
+                                    <td><strong>Gültig bis:</strong></td>
+                                    <td>{{ contract.end_date|date:"d.m.Y" }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>Monatlicher Gesamtbetrag:</strong></td>
+                                    <td><strong>{{ contract.total_amount|floatformat:2 }}€</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user"></i> Elterninformationen
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Name:</strong></td>
+                                    <td>{{ contract.parent.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>E-Mail:</strong></td>
+                                    <td>{{ contract.parent.email }}</td>
+                                </tr>
+                                {% if contract.parent.userprofile.phone_number %}
+                                <tr>
+                                    <td><strong>Telefon:</strong></td>
+                                    <td>{{ contract.parent.userprofile.phone_number }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if contract.parent.userprofile.address %}
+                                <tr>
+                                    <td><strong>Adresse:</strong></td>
+                                    <td>{{ contract.parent.userprofile.address }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>SEPA-Zahlung:</strong></td>
+                                    <td>
+                                        {% if contract.parent.userprofile.sepa_mandate %}
+                                            <span class="badge badge-success">Aktiv</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Nicht aktiv</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vertragspositionen -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Vertragspositionen
+                    </h5>
+                    <span class="badge badge-info">{{ contract_items.count }} Position{{ contract_items.count|pluralize:"en" }}</span>
+                </div>
+                <div class="card-body">
+                    {% if contract_items %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Kind</th>
+                                        <th>Fach</th>
+                                        <th>Alter Kind</th>
+                                        <th>Grundpreis</th>
+                                        <th>Rabatt</th>
+                                        <th>Endpreis</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in contract_items %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-sm me-2">
+                                                    <div class="avatar-initial rounded-circle bg-primary">
+                                                        {{ item.child.user.first_name|first }}{{ item.child.user.last_name|first }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ item.child.user.get_full_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ item.child.age }} Jahre</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{{ item.subject.name }}</strong>
+                                            {% if item.subject.description %}
+                                                <br><small class="text-muted">{{ item.subject.description|truncatechars:50 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.child_age_at_start|default:"-" }}</td>
+                                        <td>{{ item.base_price|floatformat:2 }}€</td>
+                                        <td>
+                                            {% if item.discount_amount > 0 %}
+                                                <span class="text-success">-{{ item.discount_amount|floatformat:2 }}€</span>
+                                                {% if item.discount_type %}
+                                                    <br><small class="text-muted">{{ item.get_discount_type_display }}</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ item.final_price|floatformat:2 }}€</strong></td>
+                                        <td>
+                                            {% if item.is_active %}
+                                                <span class="badge badge-success">Aktiv</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">Inaktiv</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary">
+                                        <th colspan="5" class="text-end">Gesamt monatlich:</th>
+                                        <th>{{ contract.total_amount|floatformat:2 }}€</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p>Keine Vertragspositionen vorhanden</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Letzte Änderungsanträge -->
+            {% if change_requests %}
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Letzte Änderungsanträge
+                    </h5>
+                    <a href="{% url 'contract_requests_list' %}" class="btn btn-sm btn-outline-primary">
+                        Alle anzeigen
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Typ</th>
+                                    <th>Beschreibung</th>
+                                    <th>Geschätzte Änderung</th>
+                                    <th>Status</th>
+                                    <th>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in change_requests %}
+                                <tr>
+                                    <td>{{ request.created_at|date:"d.m.Y" }}</td>
+                                    <td>
+                                        <span class="badge badge-info">
+                                            {{ request.get_request_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ request.description|truncatechars:50 }}</td>
+                                    <td>
+                                        {% if request.estimated_change > 0 %}
+                                            <span class="text-success">+{{ request.estimated_change|floatformat:2 }}€</span>
+                                        {% elif request.estimated_change < 0 %}
+                                            <span class="text-danger">{{ request.estimated_change|floatformat:2 }}€</span>
+                                        {% else %}
+                                            <span class="text-muted">0.00€</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                            <span class="badge badge-warning">{{ request.get_status_display }}</span>
+                                        {% elif request.status == 'approved' %}
+                                            <span class="badge badge-success">{{ request.get_status_display }}</span>
+                                        {% elif request.status == 'rejected' %}
+                                            <span class="badge badge-danger">{{ request.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ request.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'contract_request_detail' request.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.badge-primary { background-color: #007bff; }
+.badge-success { background-color: #28a745; }
+.badge-warning { background-color: #ffc107; color: #212529; }
+.badge-danger { background-color: #dc3545; }
+.badge-info { background-color: #17a2b8; }
+.badge-secondary { background-color: #6c757d; }
+
+.table-primary {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+</style>
+{% endblock %}

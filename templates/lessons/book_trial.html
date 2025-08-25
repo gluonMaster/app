@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Probestunde buchen{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-plus"></i> Probestunde buchen</h3>
+                    <p class="mb-0 text-muted">Buchen Sie eine kostenlose Probestunde für Ihr Kind</p>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.child.id_for_label }}" class="form-label">
+                                        <i class="fas fa-user"></i> Kind *
+                                    </label>
+                                    {{ form.child }}
+                                    {% if form.child.errors %}
+                                        <div class="text-danger small">{{ form.child.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.subject.id_for_label }}" class="form-label">
+                                        <i class="fas fa-book"></i> Fach *
+                                    </label>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                        <div class="text-danger small">{{ form.subject.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.preferred_date.id_for_label }}" class="form-label">
+                                        <i class="fas fa-calendar-alt"></i> Gewünschtes Datum *
+                                    </label>
+                                    {{ form.preferred_date }}
+                                    {% if form.preferred_date.errors %}
+                                        <div class="text-danger small">{{ form.preferred_date.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Format: TT.MM.YYYY HH:MM</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.group.id_for_label }}" class="form-label">
+                                        <i class="fas fa-users"></i> Bevorzugte Gruppe (optional)
+                                    </label>
+                                    {{ form.group }}
+                                    {% if form.group.errors %}
+                                        <div class="text-danger small">{{ form.group.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Lassen Sie leer für eine Einzelstunde</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-sticky-note"></i> Zusätzliche Notizen
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger small">{{ form.notes.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Besondere Wünsche, Vorerfahrungen, Schwierigkeiten, etc.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Hinweis:</strong> Probestunden sind kostenfrei.
+                            Nach der Buchung werden wir uns zur Terminbestätigung bei Ihnen melden.
+                            Sie erhalten auch eine Bestätigungs-E-Mail mit allen Details.
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times"></i> Abbrechen
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Probestunde buchen
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informationen zu Probestunden -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-question-circle"></i> Was Sie wissen sollten</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-gift"></i> Kostenlos</h6>
+                            <p class="small">Alle Probestunden sind kostenfrei und unverbindlich.</p>
+
+                            <h6><i class="fas fa-clock"></i> Dauer</h6>
+                            <p class="small">Eine Probestunde dauert in der Regel 45-60 Minuten.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-calendar-check"></i> Terminbestätigung</h6>
+                            <p class="small">Wir bestätigen Ihren Wunschtermin oder schlagen Alternativen vor.</p>
+
+                            <h6><i class="fas fa-envelope"></i> Erinnerung</h6>
+                            <p class="small">Sie erhalten 24h vor dem Termin eine Erinnerungs-E-Mail.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

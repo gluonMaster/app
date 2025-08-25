@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Benachrichtigungsstatistik{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-graph-up text-primary me-2"></i>Benachrichtigungsstatistik</h1>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h4>{{ total_notifications }}</h4>
+                <p>Gesamt</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h4>{{ unread_notifications }}</h4>
+                <p>Ungelesen</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h4>{{ critical_unacknowledged }}</h4>
+                <p>Kritisch unbestätigt</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h4>{{ recent_stats|length }}</h4>
+                <p>Letzte 7 Tage</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <!-- Statistik nach Typen -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Nach Typ</h5>
+            </div>
+            <div class="card-body">
+                {% for stat in type_stats %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ stat.notification_type }}</span>
+                    <span>
+                        <span class="badge bg-primary">{{ stat.total }}</span>
+                        {% if stat.unread > 0 %}
+                            <span class="badge bg-warning">{{ stat.unread }} ungelesen</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <!-- Top Benutzer mit ungelesenen -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Meiste ungelesene</h5>
+            </div>
+            <div class="card-body">
+                {% for stat in user_stats %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ stat.recipient__first_name }} {{ stat.recipient__last_name }}</span>
+                    <span class="badge bg-warning">{{ stat.unread_count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kritische Benachrichtigungen -->
+{% if critical_notifications %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="text-danger">Kritische unbestätigte Benachrichtigungen</h5>
+    </div>
+    <div class="card-body">
+        {% for notification in critical_notifications %}
+        <div class="alert alert-danger">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>{{ notification.recipient.get_full_name }}</strong><br>
+                    {{ notification.title }}<br>
+                    <small>{{ notification.created_at|timesince }} ago</small>
+                </div>
+                <div>
+                    <a href="{% url 'notifications:send_reminder' notification.id %}" 
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Erinnerung senden?')">
+                        Erinnerung
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

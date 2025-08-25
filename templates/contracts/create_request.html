@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% load crispy_forms_tags %}
+{% load contract_extras %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Hinweis:</strong> Ihr Antrag wird an die Verwaltung weitergeleitet und von dort bearbeitet.
+                        Sie erhalten eine Benachrichtigung über den Status Ihres Antrags.
+                    </div>
+
+                    <form method="post" id="contract-request-form">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.contract.id_for_label }}" class="form-label">
+                                        {{ form.contract.label }}
+                                    </label>
+                                    {{ form.contract|add_class:"form-select" }}
+                                    {% if form.contract.help_text %}
+                                        <div class="form-text">{{ form.contract.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.request_type.id_for_label }}" class="form-label">
+                                        {{ form.request_type.label }}
+                                    </label>
+                                    {{ form.request_type|add_class:"form-select" }}
+                                    {% if form.request_type.help_text %}
+                                        <div class="form-text">{{ form.request_type.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Поля для добавления предмета -->
+                        <div id="add-subject-fields" class="request-type-fields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.child.id_for_label }}" class="form-label">
+                                            {{ form.child.label }}
+                                        </label>
+                                        {{ form.child|add_class:"form-select" }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.subject.id_for_label }}" class="form-label">
+                                            {{ form.subject.label }}
+                                        </label>
+                                        {{ form.subject|add_class:"form-select" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Поля для удаления предмета -->
+                        <div id="remove-subject-fields" class="request-type-fields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.child.id_for_label }}" class="form-label">
+                                            {{ form.child.label }}
+                                        </label>
+                                        {{ form.child|add_class:"form-select" }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Aktueller Fach</label>
+                                        <select class="form-select" id="current-subject-select" name="current_subject">
+                                            <option value="">Wählen Sie zuerst ein Kind</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Поля для добавления ребенка -->
+                        <div id="add-child-fields" class="request-type-fields" style="display: none;">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Hinweis:</strong> Für die Hinzufügung eines neuen Kindes kontaktieren Sie bitte direkt die Verwaltung.
+                            </div>
+                        </div>
+
+                        <!-- Поля для удаления ребенка -->
+                        <div id="remove-child-fields" class="request-type-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="{{ form.child.id_for_label }}" class="form-label">
+                                    {{ form.child.label }}
+                                </label>
+                                {{ form.child|add_class:"form-select" }}
+                            </div>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Achtung:</strong> Durch das Entfernen eines Kindes werden alle zugehörigen Fächer beendet.
+                            </div>
+                        </div>
+
+                        <!-- Описание -->
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description|add_class:"form-control" }}
+                            {% if form.description.help_text %}
+                                <div class="form-text">{{ form.description.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Предполагаемое изменение стоимости -->
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-calculator"></i> Geschätzte Kostenänderung
+                                </h6>
+                                <div id="price-estimate" class="fs-4 fw-bold text-primary">
+                                    Wählen Sie die Optionen aus, um die Schätzung zu sehen
+                                </div>
+                                <small class="text-muted">
+                                    Dies ist nur eine Schätzung. Der endgültige Betrag wird von der Verwaltung bestätigt.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'contracts:contracts_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Zurück
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                                <i class="fas fa-paper-plane"></i> Antrag einreichen
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const requestTypeSelect = document.getElementById('{{ form.request_type.id_for_label }}');
+    const childSelect = document.getElementById('{{ form.child.id_for_label }}');
+    const subjectSelect = document.getElementById('{{ form.subject.id_for_label }}');
+    const currentSubjectSelect = document.getElementById('current-subject-select');
+    const submitBtn = document.getElementById('submit-btn');
+    const priceEstimate = document.getElementById('price-estimate');
+
+    // Показать/скрыть поля в зависимости от типа заявки
+    function toggleFields() {
+        const requestType = requestTypeSelect.value;
+
+        // Скрыть все поля
+        document.querySelectorAll('.request-type-fields').forEach(field => {
+            field.style.display = 'none';
+        });
+
+        // Показать нужные поля
+        if (requestType) {
+            const fieldsId = requestType.replace('_', '-') + '-fields';
+            const fieldsElement = document.getElementById(fieldsId);
+            if (fieldsElement) {
+                fieldsElement.style.display = 'block';
+            }
+        }
+
+        checkFormValid();
+        updatePriceEstimate();
+    }
+
+    // Загрузить предметы ребенка для удаления
+    function loadChildSubjects() {
+        const childId = childSelect.value;
+        const requestType = requestTypeSelect.value;
+
+        if (childId && requestType === 'remove_subject') {
+            fetch(`{% url 'contracts:get_child_subjects' %}?child_id=${childId}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentSubjectSelect.innerHTML = '<option value="">Wählen Sie ein Fach</option>';
+                    data.current_subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject[0];
+                        option.textContent = subject[1];
+                        currentSubjectSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading child subjects:', error);
+                });
+        }
+    }
+
+    // Проверить валидность формы
+    function checkFormValid() {
+        const requestType = requestTypeSelect.value;
+        let isValid = requestType && document.getElementById('{{ form.description.id_for_label }}').value.trim();
+
+        if (requestType === 'add_subject') {
+            isValid = isValid && childSelect.value && subjectSelect.value;
+        } else if (requestType === 'remove_subject') {
+            isValid = isValid && childSelect.value && currentSubjectSelect.value;
+        } else if (requestType === 'remove_child') {
+            isValid = isValid && childSelect.value;
+        }
+
+        submitBtn.disabled = !isValid;
+    }
+
+    // Обновить предполагаемую стоимость
+    function updatePriceEstimate() {
+        const requestType = requestTypeSelect.value;
+        const childId = childSelect.value;
+        const subjectId = subjectSelect.value;
+        const currentSubjectId = currentSubjectSelect.value;
+
+        if (!requestType) {
+            priceEstimate.textContent = 'Wählen Sie die Optionen aus, um die Schätzung zu sehen';
+            return;
+        }
+
+        let params = new URLSearchParams({ request_type: requestType });
+
+        if (requestType === 'add_subject' && subjectId) {
+            params.append('subject_id', subjectId);
+        } else if (requestType === 'remove_subject' && childId && currentSubjectId) {
+            params.append('child_id', childId);
+            params.append('subject_id', currentSubjectId);
+        }
+
+        if (params.toString().includes('subject_id')) {
+            fetch(`{% url 'contracts:calculate_price_estimate' %}?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    priceEstimate.textContent = data.formatted_change;
+                    priceEstimate.className = 'fs-4 fw-bold ' +
+                        (data.estimated_change > 0 ? 'text-success' :
+                         data.estimated_change < 0 ? 'text-danger' : 'text-primary');
+                })
+                .catch(error => {
+                    console.error('Error calculating price estimate:', error);
+                    priceEstimate.textContent = 'Fehler bei der Berechnung';
+                });
+        } else {
+            priceEstimate.textContent = 'Wählen Sie alle erforderlichen Optionen aus';
+        }
+    }
+
+    // Обработчики событий
+    requestTypeSelect.addEventListener('change', toggleFields);
+    childSelect.addEventListener('change', function() {
+        loadChildSubjects();
+        checkFormValid();
+        updatePriceEstimate();
+    });
+    subjectSelect.addEventListener('change', function() {
+        checkFormValid();
+        updatePriceEstimate();
+    });
+    currentSubjectSelect.addEventListener('change', function() {
+        checkFormValid();
+        updatePriceEstimate();
+    });
+    document.getElementById('{{ form.description.id_for_label }}').addEventListener('input', checkFormValid);
+
+    // Инициализация
+    toggleFields();
+});
+</script>
+{% endblock %}

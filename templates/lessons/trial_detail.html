@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Probestunde: {{ trial.subject.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-play"></i> Probestunde Details</h3>
+                    <p class="mb-0 text-muted">{{ trial.subject.name }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Allgemeine Informationen</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Schüler:</strong> {{ trial.child.user.get_full_name }}</li>
+                                <li><strong>Fach:</strong> {{ trial.subject.name }}</li>
+                                <li><strong>Datum:</strong> {{ trial.scheduled_date|date:"d.m.Y H:i" }}</li>
+                                {% if trial.group %}
+                                    <li><strong>Gruppe:</strong>
+                                        <a href="{% url 'lessons:group_detail' trial.group.id %}">{{ trial.group.name }}</a>
+                                    </li>
+                                {% else %}
+                                    <li><strong>Art:</strong> Einzelstunde</li>
+                                {% endif %}
+                                {% if trial.teacher %}
+                                    <li><strong>Lehrer:</strong> {{ trial.teacher.get_full_name }}</li>
+                                    {% if trial.teacher.email %}
+                                        <li><strong>E-Mail:</strong>
+                                            <a href="mailto:{{ trial.teacher.email }}">{{ trial.teacher.email }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5>Status & Ergebnis</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Status:</strong>
+                                    {% if trial.status == "scheduled" %}
+                                        <span class="badge bg-info">Geplant</span>
+                                    {% elif trial.status == "conducted" %}
+                                        <span class="badge bg-success">Durchgeführt</span>
+                                    {% elif trial.status == "cancelled" %}
+                                        <span class="badge bg-danger">Abgesagt</span>
+                                    {% elif trial.status == "no_show" %}
+                                        <span class="badge bg-warning">Nicht erschienen</span>
+                                    {% endif %}
+                                </li>
+
+                                {% if trial.status == "conducted" %}
+                                <li><strong>Ergebnis:</strong>
+                                    {% if trial.result == "interested" %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-heart"></i> Interessiert
+                                        </span>
+                                    {% elif trial.result == "not_interested" %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-times"></i> Nicht interessiert
+                                        </span>
+                                    {% elif trial.result == "needs_consideration" %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i> Bedenkzeit
+                                        </span>
+                                    {% endif %}
+                                </li>
+                                {% endif %}
+
+                                <li><strong>Gebucht am:</strong> {{ trial.created_at|date:"d.m.Y H:i" }}</li>
+                                {% if trial.updated_at != trial.created_at %}
+                                    <li><strong>Aktualisiert:</strong> {{ trial.updated_at|date:"d.m.Y H:i" }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {% if trial.notes %}
+                    <div class="mt-4">
+                        <h5>Notizen bei der Buchung</h5>
+                        <div class="alert alert-light">
+                            <i class="fas fa-sticky-note"></i>
+                            {{ trial.notes|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if trial.feedback %}
+                    <div class="mt-4">
+                        <h5>Feedback nach der Probestunde</h5>
+                        <div class="alert alert-success">
+                            <i class="fas fa-comment"></i>
+                            {{ trial.feedback|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer">
+                    <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Zurück zur Übersicht
+                    </a>
+
+                    {% if trial.group %}
+                    <a href="{% url 'lessons:group_detail' trial.group.id %}" class="btn btn-info">
+                        <i class="fas fa-users"></i> Gruppe anzeigen
+                    </a>
+                    {% endif %}
+
+                    {% if trial.status == "conducted" and trial.result == "interested" and user.userprofile.is_parent %}
+                    <a href="{% url 'lessons:groups_list' %}?subject={{ trial.subject.id }}" class="btn btn-success">
+                        <i class="fas fa-graduation-cap"></i> Anmeldung
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Информация о ребенке -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Schülerinformationen</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><strong>Name:</strong> {{ trial.child.user.get_full_name }}</li>
+                        {% if trial.child.birth_date %}
+                            <li><strong>Geburtsdatum:</strong> {{ trial.child.birth_date|date:"d.m.Y" }}</li>
+                            <li><strong>Alter:</strong> {{ trial.child.age }} Jahre</li>
+                        {% endif %}
+                        {% if trial.child.contact_phone %}
+                            <li><strong>Telefon:</strong> {{ trial.child.contact_phone }}</li>
+                        {% endif %}
+                        {% if trial.child.parent %}
+                            <li><strong>Elternteil:</strong> {{ trial.child.parent.get_full_name }}</li>
+                            {% if trial.child.parent.email %}
+                                <li><strong>E-Mail:</strong>
+                                    <a href="mailto:{{ trial.child.parent.email }}">{{ trial.child.parent.email }}</a>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Информация о предмете -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-book"></i> Fach: {{ trial.subject.name }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if trial.subject.description %}
+                        <p>{{ trial.subject.description }}</p>
+                    {% endif %}
+                    <ul class="list-unstyled">
+                        <li><strong>Altersgruppe:</strong> {{ trial.subject.age_range_start }}-{{ trial.subject.age_range_end }} Jahre</li>
+                        {% if trial.subject.difficulty_level %}
+                            <li><strong>Schwierigkeitsgrad:</strong> {{ trial.subject.get_difficulty_level_display }}</li>
+                        {% endif %}
+                    </ul>
+
+                    <a href="{% url 'lessons:subjects_list' %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-list"></i> Alle Fächer
+                    </a>
+                </div>
+            </div>
+
+            <!-- Следующие шаги -->
+            {% if trial.status == "scheduled" %}
+            <div class="card mt-3 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Nächste Schritte</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Warten Sie auf die Terminbestätigung</li>
+                        <li>Sie erhalten 24h vorher eine Erinnerung</li>
+                        <li>Kommen Sie 10 Minuten früher</li>
+                        <li>Bringen Sie ggf. eigene Materialien mit</li>
+                    </ul>
+                </div>
+            </div>
+            {% elif trial.status == "conducted" and trial.result == "interested" %}
+            <div class="card mt-3 border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-graduation-cap"></i> Anmeldung</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small">Ihr Kind ist interessiert! Nächste Schritte:</p>
+                    <div class="d-grid">
+                        <a href="{% url 'lessons:groups_list' %}?subject={{ trial.subject.id }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-users"></i> Verfügbare Gruppen
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

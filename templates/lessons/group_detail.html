@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Gruppe: {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users"></i> {{ group.name }}</h3>
+                    <p class="mb-0 text-muted">{{ group.subject.name }}</p>
+                </div>
+                <div class="card-body">
+                    {% if group.description %}
+                        <p class="card-text">{{ group.description }}</p>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Gruppeninformationen</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Fach:</strong> {{ group.subject.name }}</li>
+                                <li><strong>Altersgruppe:</strong> {{ group.age_range_start }}-{{ group.age_range_end }} Jahre</li>
+                                <li><strong>Schüler:</strong> {{ group.current_students_count }}/{{ group.max_students }}</li>
+                                <li><strong>Status:</strong>
+                                    {% if group.is_active %}
+                                        <span class="badge bg-success">Aktiv</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inaktiv</span>
+                                    {% endif %}
+                                    {% if group.is_full %}
+                                        <span class="badge bg-danger">Voll</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if group.teachers.all %}
+                            <h5>Lehrer</h5>
+                            <ul class="list-unstyled">
+                                {% for teacher in group.teachers.all %}
+                                <li>
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    {{ teacher.get_full_name }}
+                                    {% if teacher.email %}
+                                        <br><small class="text-muted">{{ teacher.email }}</small>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Расписание -->
+            {% if schedules %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Stundenplan</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Uhrzeit</th>
+                                    <th>Raum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr>
+                                    <td>{{ schedule.get_weekday_display }}</td>
+                                    <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+                                    <td>{{ schedule.room|default:"Nicht angegeben" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Список студентов (если доступен) -->
+            {% if can_view_details and enrollments %}
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-graduate"></i> Schüler in der Gruppe</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% for enrollment in enrollments %}
+                        <li class="d-flex justify-content-between align-items-center mb-2">
+                            <span>
+                                {{ enrollment.child.user.get_full_name }}
+                            </span>
+                            <small class="text-muted">
+                                seit {{ enrollment.enrollment_date|date:"d.m.Y" }}
+                            </small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% elif not can_view_details %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Die Schülerliste ist nur für Gruppenmitglieder und Lehrer sichtbar.
+            </div>
+            {% endif %}
+
+            <!-- Действия -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs"></i> Aktionen</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'lessons:group_schedule' group.id %}" class="btn btn-info btn-sm mb-2 w-100">
+                        <i class="fas fa-calendar-alt"></i> Vollständiger Stundenplan
+                    </a>
+
+                    {% if user.userprofile.is_parent and not group.is_full %}
+                    <a href="{% url 'lessons:trial_lessons' %}" class="btn btn-success btn-sm mb-2 w-100">
+                        <i class="fas fa-play"></i> Probestunde buchen
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'lessons:groups_list' %}" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="fas fa-arrow-left"></i> Zurück zur Übersicht
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
