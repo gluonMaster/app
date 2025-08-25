@@ -86,7 +86,7 @@
         <div class="col-md-4">
             <div class="card border-info">
                 <div class="card-body text-center">
-                    <h4 class="text-info">{{ enrollments|referencesto:"group"|unique|length }}</h4>
+                    <h4 class="text-info">{{ group_count }}</h4>
                     <p class="mb-0">Aktive Gruppen</p>
                 </div>
             </div>
@@ -94,7 +94,7 @@
         <div class="col-md-4">
             <div class="card border-success">
                 <div class="card-body text-center">
-                    <h4 class="text-success">{{ enrollments|referencesto:"group__subject"|unique|length }}</h4>
+                    <h4 class="text-success">{{ subject_count }}</h4>
                     <p class="mb-0">Unterrichtete Fächer</p>
                 </div>
             </div>

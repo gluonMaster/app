@@ -498,14 +498,23 @@ def child_attendance_view(request, child_id):
         messages.error(request, "Zugriff verweigert.")
         return redirect("clients:home")
 
-    # Получаем историю посещаемости
-    absence_history = AbsenceHistory.objects.filter(child=child).order_by(
-        "-lesson_date"
-    )[:50]
+    # Получаем все записи об отсутствиях для данного ребенка (для статистики)
+    all_absences = AbsenceHistory.objects.filter(child=child).order_by("-lesson_date")
+
+    # Вычисляем статистику по типам отсутствий
+    total_count = all_absences.count()
+    excused_count = all_absences.filter(absence_type="excused").count()
+    unexcused_count = all_absences.filter(absence_type="unexcused").count()
+
+    # Получаем только последние 50 записей для отображения
+    absence_history = all_absences[:50]
 
     context = {
         "child": child,
         "absence_history": absence_history,
+        "total_count": total_count,
+        "excused_count": excused_count,
+        "unexcused_count": unexcused_count,
     }
     return render(request, "clients/child_attendance.html", context)
 

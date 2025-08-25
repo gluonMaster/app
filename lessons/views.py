@@ -310,7 +310,16 @@ def teacher_students_view(request):
         .order_by("child__user__first_name")
     )
 
-    context = {"enrollments": enrollments, "title": "Meine Schüler"}
+    # Вычисляем количество уникальных групп и предметов
+    group_count = enrollments.values("group").distinct().count()
+    subject_count = enrollments.values("group__subject").distinct().count()
+
+    context = {
+        "enrollments": enrollments,
+        "title": "Meine Schüler",
+        "group_count": group_count,
+        "subject_count": subject_count,
+    }
 
     return render(request, "lessons/teacher_students.html", context)
 

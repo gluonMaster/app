@@ -107,7 +107,7 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title text-primary">{{ absence_history|length }}</h5>
+                <h5 class="card-title text-primary">{{ total_count }}</h5>
                 <p class="card-text">Gesamte Fehlzeiten</p>
             </div>
         </div>
@@ -115,9 +115,7 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title text-warning">
-                    {{ absence_history|dictsort:"absence_type"|filter:"excused"|length }}
-                </h5>
+                <h5 class="card-title text-warning">{{ excused_count }}</h5>
                 <p class="card-text">Entschuldigt</p>
             </div>
         </div>
@@ -125,9 +123,7 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title text-danger">
-                    {{ absence_history|dictsort:"absence_type"|filter:"unexcused"|length }}
-                </h5>
+                <h5 class="card-title text-danger">{{ unexcused_count }}</h5>
                 <p class="card-text">Unentschuldigt</p>
             </div>
         </div>
