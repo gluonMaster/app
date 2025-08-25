@@ -101,13 +101,8 @@ class UserAdmin(BaseUserAdmin):
     get_phone.short_description = "Telefon"
 
     def get_queryset(self, request):
-        """Оптимизируем запросы для списка детей"""
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("parent__user")
-            .prefetch_related("groupenrollment_set__group__subject")
-        )
+        """Оптимизируем запросы для списка пользователей"""
+        return super().get_queryset(request).select_related("userprofile")
 
 
 # Перерегистрируем админку пользователей
