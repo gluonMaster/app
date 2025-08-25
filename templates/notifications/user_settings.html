@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+                <a href="{% url 'notifications:notifications_index' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Zurück zu Benachrichtigungen
+                </a>
+            </div>
+
+            <!-- Информационный блок -->
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i>
+                <strong>Hinweis:</strong> Die Benachrichtigungseinstellungen werden in einer zukünftigen Version erweitert.
+                Derzeit können Sie grundlegende Präferenzen festlegen.
+            </div>
+
+            <!-- Основные настройки -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear"></i> Allgemeine Einstellungen
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- E-Mail уведомления -->
+                        <div class="mb-4">
+                            <h6>E-Mail-Benachrichtigungen</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" checked>
+                                <label class="form-check-label" for="email_notifications">
+                                    E-Mail-Benachrichtigungen aktivieren
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Wenn aktiviert, erhalten Sie wichtige Benachrichtigungen auch per E-Mail.
+                            </div>
+                        </div>
+
+                        <!-- Типы уведомлений -->
+                        <div class="mb-4">
+                            <h6>Benachrichtigungstypen</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="contract_notifications" name="contract_notifications" checked>
+                                        <label class="form-check-label" for="contract_notifications">
+                                            <i class="bi bi-file-text text-primary"></i> Vertragsbenachrichtigungen
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="payment_notifications" name="payment_notifications" checked>
+                                        <label class="form-check-label" for="payment_notifications">
+                                            <i class="bi bi-credit-card text-success"></i> Zahlungsbenachrichtigungen
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="lesson_notifications" name="lesson_notifications" checked>
+                                        <label class="form-check-label" for="lesson_notifications">
+                                            <i class="bi bi-calendar text-info"></i> Unterrichtsbenachrichtigungen
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="general_notifications" name="general_notifications" checked>
+                                        <label class="form-check-label" for="general_notifications">
+                                            <i class="bi bi-bell text-secondary"></i> Allgemeine Benachrichtigungen
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="system_notifications" name="system_notifications" checked>
+                                        <label class="form-check-label" for="system_notifications">
+                                            <i class="bi bi-gear text-warning"></i> Systembenachrichtigungen
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="marketing_notifications" name="marketing_notifications">
+                                        <label class="form-check-label" for="marketing_notifications">
+                                            <i class="bi bi-megaphone text-danger"></i> Marketing-Benachrichtigungen
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Häufigkeit -->
+                        <div class="mb-4">
+                            <h6>Benachrichtigungshäufigkeit</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="notification_frequency" id="freq_immediate" value="immediate" checked>
+                                <label class="form-check-label" for="freq_immediate">
+                                    Sofort - Benachrichtigungen sofort erhalten
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="notification_frequency" id="freq_daily" value="daily">
+                                <label class="form-check-label" for="freq_daily">
+                                    Täglich - Zusammenfassung einmal täglich
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="notification_frequency" id="freq_weekly" value="weekly">
+                                <label class="form-check-label" for="freq_weekly">
+                                    Wöchentlich - Zusammenfassung einmal wöchentlich
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Prioritäten -->
+                        <div class="mb-4">
+                            <h6>Mindestpriorität für E-Mails</h6>
+                            <select class="form-select" name="min_email_priority">
+                                <option value="low">Niedrig - Alle Benachrichtigungen</option>
+                                <option value="medium" selected>Mittel - Nur wichtige Benachrichtigungen</option>
+                                <option value="high">Hoch - Nur sehr wichtige Benachrichtigungen</option>
+                                <option value="critical">Kritisch - Nur kritische Benachrichtigungen</option>
+                            </select>
+                            <div class="form-text">
+                                Bestimmt, welche Benachrichtigungen per E-Mail gesendet werden.
+                            </div>
+                        </div>
+
+                        <!-- Ruhemodus -->
+                        <div class="mb-4">
+                            <h6>Ruhemodus</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="quiet_start" class="form-label">Ruhezeit von</label>
+                                    <input type="time" class="form-control" id="quiet_start" name="quiet_start" value="22:00">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="quiet_end" class="form-label">Ruhezeit bis</label>
+                                    <input type="time" class="form-control" id="quiet_end" name="quiet_end" value="08:00">
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                Während der Ruhezeit werden keine E-Mail-Benachrichtigungen gesendet (außer kritische).
+                            </div>
+                        </div>
+
+                        <!-- Кнопки -->
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.location.reload()">
+                                <i class="bi bi-arrow-clockwise"></i> Zurücksetzen
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Einstellungen speichern
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Дополнительная информация -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Geplante Funktionen
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        In zukünftigen Updates werden folgende Funktionen verfügbar sein:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Browser-Push-Benachrichtigungen</li>
+                        <li>SMS-Benachrichtigungen für kritische Meldungen</li>
+                        <li>Erweiterte Filter für Benachrichtigungstypen</li>
+                        <li>Automatische Archivierung alter Benachrichtigungen</li>
+                        <li>Personalisierte Benachrichtigungsregeln</li>
+                        <li>Integration mit externen Kalendern</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Aktuelle Statistiken -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Ihre Benachrichtigungsstatistik
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary">{{ user.notification_set.count|default:"-" }}</h4>
+                                <small class="text-muted">Gesamt empfangen</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-success">{{ user.notification_set.filter.is_read=True.count|default:"-" }}</h4>
+                                <small class="text-muted">Gelesen</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-warning">{{ user.notification_set.filter.is_read=False.count|default:"-" }}</h4>
+                                <small class="text-muted">Ungelesen</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-danger">{{ user.notification_set.filter.priority='critical'.count|default:"-" }}</h4>
+                                <small class="text-muted">Kritisch</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Предупреждение о несохраненных изменениях
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, select');
+    let formChanged = false;
+
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            formChanged = true;
+        });
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    form.addEventListener('submit', function() {
+        formChanged = false;
+    });
+});
+</script>
+{% endblock %}

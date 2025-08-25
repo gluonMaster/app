@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block title %}Benachrichtigung{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="bi bi-bell"></i> Benachrichtigung
+                </h2>
+                <div>
+                    <a href="{% url 'notifications:notifications_index' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Zurück zur Liste
+                    </a>
+                    {% if not notification.is_read %}
+                    <form method="post" action="{% url 'notifications:mark_all_read' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-success">
+                            <i class="bi bi-check"></i> Als gelesen markieren
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Основная карточка уведомления -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-1">{{ notification.title }}</h4>
+                            <div class="text-muted">
+                                <i class="bi bi-calendar"></i> {{ notification.created_at|date:"d.m.Y H:i" }}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <!-- Статусы и метки -->
+                            <div class="mb-2">
+                                {% if notification.priority == 'critical' %}
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="bi bi-exclamation-triangle"></i> {{ notification.get_priority_display }}
+                                    </span>
+                                {% elif notification.priority == 'high' %}
+                                    <span class="badge bg-warning fs-6">{{ notification.get_priority_display }}</span>
+                                {% elif notification.priority == 'medium' %}
+                                    <span class="badge bg-info fs-6">{{ notification.get_priority_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary fs-6">{{ notification.get_priority_display }}</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-2">
+                                <span class="badge bg-primary">
+                                    {{ notification.get_notification_type_display }}
+                                </span>
+                            </div>
+
+                            {% if notification.is_important %}
+                            <div class="mb-2">
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-star-fill"></i> Wichtig
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Основное сообщение -->
+                    <div class="notification-message mb-4">
+                        {{ notification.message|linebreaks }}
+                    </div>
+
+                    <!-- Метаданные -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-info-circle"></i> Status
+                                    </h6>
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>Gelesen:</strong></td>
+                                            <td>
+                                                {% if notification.is_read %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Ja
+                                                    </span>
+                                                    {% if notification.read_at %}
+                                                        <br><small class="text-muted">{{ notification.read_at|date:"d.m.Y H:i" }}</small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-clock"></i> Nein
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% if notification.requires_acknowledgment %}
+                                        <tr>
+                                            <td><strong>Bestätigt:</strong></td>
+                                            <td>
+                                                {% if notification.acknowledged_at %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Ja
+                                                    </span>
+                                                    <br><small class="text-muted">{{ notification.acknowledged_at|date:"d.m.Y H:i" }}</small>
+                                                {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-x-circle"></i> Nein
+                                                    </span>
+                                                    {% if notification.priority == 'critical' %}
+                                                        <br><small class="text-danger">Bestätigung erforderlich!</small>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-gear"></i> Details
+                                    </h6>
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>ID:</strong></td>
+                                            <td><code>{{ notification.id }}</code></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Typ:</strong></td>
+                                            <td>{{ notification.get_notification_type_display }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Priorität:</strong></td>
+                                            <td>{{ notification.get_priority_display }}</td>
+                                        </tr>
+                                        {% if notification.content_object %}
+                                        <tr>
+                                            <td><strong>Verknüpft:</strong></td>
+                                            <td>{{ notification.content_object }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    {% if notification.requires_acknowledgment and not notification.acknowledged_at %}
+                    <div class="alert alert-warning mt-4" role="alert">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Bestätigung erforderlich:</strong>
+                                Diese Benachrichtigung erfordert Ihre Bestätigung.
+                            </div>
+                            <form method="post" action="#" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-check-circle"></i> Jetzt bestätigen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Если уведомление не прочитано -->
+                    {% if not notification.is_read %}
+                    <div class="alert alert-info mt-4" role="alert">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-info-circle"></i>
+                                Diese Benachrichtigung wurde noch nicht als gelesen markiert.
+                            </div>
+                            <form method="post" action="{% url 'notifications:mark_all_read' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-info">
+                                    <i class="bi bi-check"></i> Als gelesen markieren
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="bi bi-clock"></i> Erstellt am {{ notification.created_at|date:"d.m.Y H:i" }}
+                        {% if notification.is_read and notification.read_at %}
+                            | <i class="bi bi-eye"></i> Gelesen am {{ notification.read_at|date:"d.m.Y H:i" }}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-message {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #007bff;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.card .card-body .table td {
+    padding: 0.25rem 0;
+}
+</style>
+{% endblock %}

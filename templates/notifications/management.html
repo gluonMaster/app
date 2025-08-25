@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+                <div>
+                    <a href="{% url 'notifications:send_notification' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Neue Benachrichtigung
+                    </a>
+                    <a href="{% url 'notifications:bulk_send' %}" class="btn btn-info">
+                        <i class="bi bi-broadcast"></i> Massenversand
+                    </a>
+                </div>
+            </div>
+
+            <!-- Панель фильтров -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel"></i> Filter
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Alle</option>
+                                <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Ungelesen</option>
+                                <option value="critical_unack" {% if status_filter == 'critical_unack' %}selected{% endif %}>Kritisch unbestätigt</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="type" class="form-label">Typ</label>
+                            <select name="type" id="type" class="form-select">
+                                <option value="all" {% if type_filter == 'all' %}selected{% endif %}>Alle</option>
+                                {% for value, display in notification_types %}
+                                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="priority" class="form-label">Priorität</label>
+                            <select name="priority" id="priority" class="form-select">
+                                <option value="all" {% if priority_filter == 'all' %}selected{% endif %}>Alle</option>
+                                {% for value, display in priority_levels %}
+                                    <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-search"></i> Filtern
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Таблица уведомлений -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bell"></i> Benachrichtigungen
+                    </h5>
+                    <span class="badge bg-info">{{ page_obj.paginator.count }} gesamt</span>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Titel</th>
+                                        <th>Empfänger</th>
+                                        <th>Typ</th>
+                                        <th>Priorität</th>
+                                        <th>Status</th>
+                                        <th>Erstellt am</th>
+                                        <th width="120">Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for notification in page_obj %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ notification.title|truncatechars:50 }}</strong>
+                                            {% if notification.is_important %}
+                                                <i class="bi bi-exclamation-triangle text-warning" title="Wichtig"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-sm me-2">
+                                                    <div class="avatar-initial rounded-circle bg-secondary">
+                                                        {{ notification.recipient.first_name|first }}{{ notification.recipient.last_name|first }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div>{{ notification.recipient.get_full_name }}</div>
+                                                    <small class="text-muted">{{ notification.recipient.userprofile.get_role_display }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                {{ notification.get_notification_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if notification.priority == 'critical' %}
+                                                <span class="badge bg-danger">{{ notification.get_priority_display }}</span>
+                                            {% elif notification.priority == 'high' %}
+                                                <span class="badge bg-warning">{{ notification.get_priority_display }}</span>
+                                            {% elif notification.priority == 'medium' %}
+                                                <span class="badge bg-info">{{ notification.get_priority_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ notification.get_priority_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not notification.is_read %}
+                                                <span class="badge bg-warning">Ungelesen</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Gelesen</span>
+                                            {% endif %}
+                                            {% if notification.requires_acknowledgment and not notification.acknowledged_at %}
+                                                <br><small class="text-danger">Unbestätigt</small>
+                                            {% elif notification.acknowledged_at %}
+                                                <br><small class="text-success">Bestätigt</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ notification.created_at|date:"d.m.Y H:i" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'notifications:detail' notification.id %}"
+                                                   class="btn btn-sm btn-outline-primary" title="Anzeigen">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                {% if notification.priority == 'critical' and notification.requires_acknowledgment and not notification.acknowledged_at %}
+                                                <form method="post" action="{% url 'notifications:send_reminder' notification.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Erinnerung senden">
+                                                        <i class="bi bi-bell"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                                <form method="post" action="{% url 'notifications:delete' notification.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                            onclick="return confirm('Benachrichtigung wirklich löschen?')" title="Löschen">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Пагинация -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Seitennavigation">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">Erste</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">Zurück</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">Weiter</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">Letzte</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fa-3x mb-3"></i>
+                            <p>Keine Benachrichtigungen gefunden</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    width: 35px;
+    height: 35px;
+}
+
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

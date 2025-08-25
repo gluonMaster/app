@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ title }}</h2>
+                <div>
+                    <a href="{% url 'notifications:management' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Zurück zur Verwaltung
+                    </a>
+                    <a href="{% url 'notifications:send_notification' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-person"></i> Einzelversand
+                    </a>
+                </div>
+            </div>
+
+            <!-- Информационная карточка -->
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i>
+                <strong>Massenversand:</strong> Diese Funktion ermöglicht es, Benachrichtigungen gleichzeitig an alle Benutzer bestimmter Rollen zu senden.
+            </div>
+
+            <!-- Форма массовой рассылки -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-broadcast"></i> Massenbenachrichtigung konfigurieren
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Основные настройки -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="notification_type" class="form-label">Benachrichtigungstyp</label>
+                                <select name="notification_type" id="notification_type" class="form-select" required>
+                                    <option value="">-- Typ auswählen --</option>
+                                    {% for value, display in notification_types %}
+                                        <option value="{{ value }}">{{ display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="priority" class="form-label">Priorität</label>
+                                <select name="priority" id="priority" class="form-select" required>
+                                    <option value="">-- Priorität auswählen --</option>
+                                    {% for value, display in priority_levels %}
+                                        <option value="{{ value }}">{{ display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Заголовок и сообщение -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label">Titel</label>
+                            <input type="text" name="title" id="title" class="form-control" required
+                                   placeholder="Titel der Benachrichtigung eingeben">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="message" class="form-label">Nachricht</label>
+                            <textarea name="message" id="message" class="form-control" rows="6" required
+                                      placeholder="Nachrichtentext eingeben..."></textarea>
+                            <div class="form-text">Die Nachricht wird an alle ausgewählten Empfänger gesendet.</div>
+                        </div>
+
+                        <!-- Дополнительные опции -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" name="is_important" id="is_important" class="form-check-input">
+                                    <label for="is_important" class="form-check-label">
+                                        <i class="bi bi-exclamation-triangle text-warning"></i> Als wichtig markieren
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" name="requires_acknowledgment" id="requires_acknowledgment" class="form-check-input">
+                                    <label for="requires_acknowledgment" class="form-check-label">
+                                        <i class="bi bi-check-circle text-success"></i> Bestätigung erforderlich
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Выбор аудитории по ролям -->
+                        <div class="mb-4">
+                            <label class="form-label">Zielgruppe (Rollen auswählen)</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% for value, display in user_roles %}
+                                            <div class="col-md-4 mb-2">
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="recipient_roles" value="{{ value }}"
+                                                           id="role_{{ value }}" class="form-check-input">
+                                                    <label for="role_{{ value }}" class="form-check-label">
+                                                        {% if value == 'parent' %}
+                                                            <i class="bi bi-person text-primary"></i>
+                                                        {% elif value == 'child' %}
+                                                            <i class="bi bi-people text-info"></i>
+                                                        {% elif value == 'teacher' %}
+                                                            <i class="bi bi-mortarboard text-success"></i>
+                                                        {% elif value == 'admin' %}
+                                                            <i class="bi bi-gear text-danger"></i>
+                                                        {% elif value == 'accountant' %}
+                                                            <i class="bi bi-calculator text-warning"></i>
+                                                        {% endif %}
+                                                        {{ display }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i>
+                                        Wählen Sie mindestens eine Rolle aus. Die Benachrichtigung wird an alle aktiven Benutzer der ausgewählten Rollen gesendet.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки действий -->
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                                    <i class="bi bi-arrow-left"></i> Abbrechen
+                                </button>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-outline-info me-2" id="previewBtn">
+                                    <i class="bi bi-eye"></i> Vorschau
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Massenbenachrichtigung senden
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Предварительный просмотр (скрытый блок) -->
+            <div class="card mt-4" id="previewCard" style="display: none;">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-eye"></i> Vorschau der Benachrichtigung
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="previewContent">
+                        <!-- Контент будет заполнен через JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Предварительный просмотр
+    const previewBtn = document.getElementById('previewBtn');
+    const previewCard = document.getElementById('previewCard');
+    const previewContent = document.getElementById('previewContent');
+
+    previewBtn.addEventListener('click', function() {
+        const title = document.getElementById('title').value;
+        const message = document.getElementById('message').value;
+        const notificationType = document.getElementById('notification_type').value;
+        const priority = document.getElementById('priority').value;
+        const isImportant = document.getElementById('is_important').checked;
+        const requiresAck = document.getElementById('requires_acknowledgment').checked;
+
+        const selectedRoles = Array.from(document.querySelectorAll('input[name="recipient_roles"]:checked'))
+            .map(cb => cb.nextElementSibling.textContent.trim());
+
+        if (!title || !message) {
+            alert('Bitte füllen Sie Titel und Nachricht aus.');
+            return;
+        }
+
+        let preview = `
+            <div class="notification-preview border p-3 rounded">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0">${title}</h6>
+                    <div>
+                        ${isImportant ? '<span class="badge bg-warning">Wichtig</span>' : ''}
+                        ${requiresAck ? '<span class="badge bg-info">Bestätigung erforderlich</span>' : ''}
+                    </div>
+                </div>
+                <p class="mb-2">${message.replace(/\n/g, '<br>')}</p>
+                <small class="text-muted">
+                    Typ: ${notificationType} | Priorität: ${priority}
+                    ${selectedRoles.length > 0 ? ' | Zielgruppe: ' + selectedRoles.join(', ') : ''}
+                </small>
+            </div>
+        `;
+
+        previewContent.innerHTML = preview;
+        previewCard.style.display = 'block';
+        previewCard.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Валидация формы
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const selectedRoles = document.querySelectorAll('input[name="recipient_roles"]:checked');
+        if (selectedRoles.length === 0) {
+            e.preventDefault();
+            alert('Bitte wählen Sie mindestens eine Zielgruppe aus.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}
